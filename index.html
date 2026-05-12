@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CMv2 · Node Operator Groups · Hoodi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #111111;
+      --surface:  #1a1a1a;
+      --hover:    #222222;
+      --border:   #2a2a2a;
+      --border-2: #383838;
+      --text-1:   #f0f0f0;
+      --text-2:   #a0a0a0;
+      --text-3:   #606060;
+      --blue:     #60a5fa;
+      --green:    #4ade80;
+      --red:      #f87171;
+      --amber:    #fbbf24;
+    }
+
+    body {
+      background: var(--bg);
+      min-height: 100vh;
+      padding: 24px 28px 64px;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 13px;
+      color: var(--text-1);
+      line-height: 1.5;
+    }
+
+    /* ── HEADER ───────────────────────────────── */
+    .board-header {
+      max-width: 1380px;
+      margin: 0 auto 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-2);
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .venue-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-1);
+      letter-spacing: -0.01em;
+    }
+
+    .venue-meta {
+      font-size: 11px;
+      color: var(--text-3);
+      text-align: right;
+      line-height: 1.6;
+    }
+
+    .header-body {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .header-refs { display: flex; flex-direction: column; gap: 3px; }
+
+    .ref-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-3); }
+    .ref-lbl { font-size: 11px; font-weight: 500; color: var(--text-2); min-width: 52px; }
+    .ref-row a { font-family: 'SF Mono', 'Roboto Mono', monospace; font-size: 11px; color: var(--blue); text-decoration: none; }
+    .ref-row a:hover { text-decoration: underline; }
+
+    .rpc-row { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+    .rpc-lbl { font-size: 11px; font-weight: 500; color: var(--text-2); min-width: 52px; }
+    .rpc-input {
+      background: var(--bg);
+      border: 1px solid var(--border-2);
+      border-radius: 4px;
+      color: var(--text-1);
+      padding: 4px 8px;
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+      font-size: 11px;
+      width: 360px;
+      outline: none;
+    }
+    .rpc-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+
+    .load-btn {
+      background: transparent;
+      color: var(--text-1);
+      border: 1px solid var(--border-2);
+      border-radius: 5px;
+      padding: 7px 18px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .load-btn:hover { background: var(--hover); border-color: var(--text-3); }
+    .load-btn:disabled { color: var(--text-3); border-color: var(--border); cursor: default; }
+
+    /* ── SUMMARY ──────────────────────────────── */
+    .tote-summary {
+      max-width: 1380px;
+      margin: 0 auto 20px;
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .summary-cell {
+      flex: 1;
+      padding: 10px 20px;
+      border-right: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .summary-cell .big {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-1);
+      display: block;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+    .summary-cell .lbl {
+      font-size: 11px;
+      color: var(--text-3);
+      font-weight: 400;
+    }
+
+    .status-cell {
+      flex: 2;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-3);
+      background: var(--bg);
+    }
+    .status-cell.error { color: var(--red); font-weight: 500; }
+    .status-cell.ok    { color: var(--green); font-weight: 500; }
+
+    /* ── GROUP SECTIONS ───────────────────────── */
+    .races {
+      max-width: 1380px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .race-card {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .race-header {
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+      background: var(--surface);
+    }
+    .race-header:hover { background: var(--hover); }
+
+    .race-num-badge {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-3);
+      min-width: 20px;
+    }
+
+    .race-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-1);
+    }
+
+    .race-subtitle {
+      font-size: 12px;
+      color: var(--text-3);
+      margin-left: 2px;
+    }
+
+    .race-chev {
+      margin-left: auto;
+      color: var(--text-3);
+      font-size: 10px;
+    }
+
+    .race-body { overflow-x: auto; }
+    .race-body::-webkit-scrollbar { height: 4px; }
+    .race-body::-webkit-scrollbar-track { background: var(--surface); }
+    .race-body::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+    .race-body::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+    /* ── TABLE ────────────────────────────────── */
+    table.runners {
+      width: 100%;
+      min-width: 1200px;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    table.runners thead tr {
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    table.runners th {
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-3);
+      text-align: left;
+      white-space: nowrap;
+      letter-spacing: 0.01em;
+    }
+
+    table.runners td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    table.runners tr:last-child td { border-bottom: none; }
+    table.runners tbody tr:hover td { background: var(--hover); }
+
+    .cloth {
+      width: 20px;
+      height: 20px;
+      border-radius: 3px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.9);
+      flex-shrink: 0;
+    }
+
+    .td-cloth { width: 32px; }
+    .td-noid  {
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+      font-size: 11px;
+      color: var(--text-3);
+      text-align: right;
+      width: 44px;
+      padding-right: 16px !important;
+    }
+    .td-name  { font-weight: 500; font-size: 13px; overflow: hidden; }
+    .td-name > span,
+    .name-details summary { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .td-desc  {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text-3);
+      margin-top: 4px;
+      max-width: 360px;
+      line-height: 1.5;
+      white-space: normal;
+    }
+
+    .name-details { display: inline; }
+    .name-details summary {
+      list-style: none;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--text-1);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .name-details summary::-webkit-details-marker { display: none; }
+    .name-details summary::after {
+      content: '›';
+      color: var(--text-3);
+      font-size: 12px;
+      font-weight: 400;
+      transition: transform 0.15s;
+      display: inline-block;
+    }
+    .name-details[open] summary::after { transform: rotate(90deg); }
+    .td-share {
+      text-align: right;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--amber);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .td-num {
+      text-align: right;
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+      font-size: 12px;
+      color: var(--text-2);
+      font-variant-numeric: tabular-nums;
+    }
+    .td-bond {
+      text-align: right;
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+      font-size: 12px;
+      color: var(--green);
+      font-variant-numeric: tabular-nums;
+    }
+    .td-wt {
+      text-align: right;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--blue);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .td-addr { white-space: nowrap; }
+    .td-addr a {
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+      font-size: 10px;
+      color: var(--text-3);
+      text-decoration: none;
+    }
+    .td-addr a:hover { color: var(--blue); }
+
+    /* ── EXTERNAL OPERATOR ────────────────────── */
+    .correspondents {
+      padding: 7px 14px 7px 12px;
+      border-top: 1px solid var(--border);
+      border-left: 3px solid var(--blue);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: rgba(96,165,250,0.05);
+    }
+
+    .corr-lbl {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--blue);
+      flex-shrink: 0;
+    }
+
+    .corr-entry {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: var(--text-2);
+    }
+
+    .corr-type {
+      background: var(--hover);
+      border: 1px solid var(--border-2);
+      color: var(--text-2);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .corr-val {
+      color: var(--text-1);
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+      font-size: 11px;
+    }
+    .corr-hex {
+      color: var(--text-3);
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+      font-size: 10px;
+    }
+
+    .empty-card {
+      padding: 16px 14px;
+      color: var(--text-3);
+      font-size: 12px;
+    }
+
+    /* ── FOOTER ───────────────────────────────── */
+    .board-footer {
+      max-width: 1380px;
+      margin: 16px auto 0;
+      font-size: 11px;
+      color: var(--text-3);
+    }
+  </style>
+</head>
+<body>
+
+<div class="board-header">
+  <div class="header-top">
+    <span class="venue-title">Node Operator Groups &mdash; CMv2</span>
+    <span class="venue-meta">Chain 560048 &middot; Hoodi Network</span>
+  </div>
+  <div class="header-body">
+    <div class="header-refs">
+      <div class="ref-row">
+        <span class="ref-lbl">Registry</span>
+        <a href="https://hoodi.etherscan.io/address/0x857289cCBFBc4C134Cc312022a104CD9b38d8AAE" target="_blank" rel="noopener">0x857289cCBFBc4C134Cc312022a104CD9b38d8AAE</a>
+      </div>
+      <div class="ref-row">
+        <span class="ref-lbl">Module</span>
+        <a href="https://hoodi.etherscan.io/address/0x87EB69Ae51317405FD285efD2326a4a11f6173b9" target="_blank" rel="noopener">0x87EB69Ae51317405FD285efD2326a4a11f6173b9</a>
+      </div>
+      <div class="rpc-row">
+        <span class="rpc-lbl">RPC</span>
+        <input class="rpc-input" type="text" id="rpcUrl" value="https://rpc.hoodi.ethpandaops.io" />
+      </div>
+    </div>
+    <button class="load-btn" id="loadBtn" onclick="load()">Refresh</button>
+  </div>
+</div>
+
+<div class="tote-summary">
+  <div class="summary-cell" id="cell-races">
+    <span class="big">—</span>
+    <span class="lbl">Groups</span>
+  </div>
+  <div class="summary-cell" id="cell-runners">
+    <span class="big">—</span>
+    <span class="lbl">Node Operators</span>
+  </div>
+  <div class="status-cell" id="status">Awaiting connection...</div>
+</div>
+
+<div class="races" id="content"></div>
+
+<div class="board-footer">CMv2 &middot; Hoodi Testnet &middot; All figures in validator keys</div>
+
+<script>
+const ADDRESSES = {
+  metaRegistry: '0x857289cCBFBc4C134Cc312022a104CD9b38d8AAE',
+  curatedModule: '0x87EB69Ae51317405FD285efD2326a4a11f6173b9',
+};
+
+const META_REGISTRY_ABI = [
+  'function getOperatorGroupsCount() view returns (uint256)',
+  'function getOperatorGroup(uint256 groupId) view returns (tuple(tuple(uint64 nodeOperatorId, uint16 share)[] subNodeOperators, tuple(bytes data)[] externalOperators) groupInfo)',
+  'function getNodeOperatorWeight(uint256 nodeOperatorId) view returns (uint256 weight)',
+  'function getOperatorMetadata(uint256 nodeOperatorId) view returns (tuple(string name, string description, bool ownerEditsRestricted) metadata)',
+];
+
+const CURATED_MODULE_ABI = [
+  'function getNodeOperatorsCount() view returns (uint256)',
+  'function getNodeOperator(uint256 nodeOperatorId) view returns (tuple(uint32 totalAddedKeys, uint32 totalWithdrawnKeys, uint32 totalDepositedKeys, uint32 totalVettedKeys, uint32 stuckValidatorsCount, uint32 depositableValidatorsCount, uint32 targetLimit, uint8 targetLimitMode, uint32 totalExitedKeys, uint32 enqueuedCount, address managerAddress, address proposedManagerAddress, address rewardAddress, address proposedRewardAddress, bool extendedManagerPermissions) nodeOperator)',
+  'function getNodeOperatorBalance(uint256 nodeOperatorId) view returns (uint256)',
+];
+
+const EXPLORER = 'https://hoodi.etherscan.io';
+
+const LIDO_LOCATOR_ADDR = '0xe2EF9536DAAAEBFf5b1c130957AB3E80056b06D8';
+
+const LIDO_LOCATOR_ABI = [
+  'function stakingRouter() view returns (address)',
+];
+
+const STAKING_ROUTER_ABI = [
+  'function getStakingModule(uint256 _stakingModuleId) view returns (tuple(uint24 id, address stakingModuleAddress, uint16 stakingModuleFee, uint16 treasuryFee, uint16 stakeShareLimit, uint8 status, string name, uint64 lastDepositAt, uint256 lastDepositBlock, uint256 exitedValidatorsCount, uint16 priorityExitShareThreshold, uint64 maxDepositsPerBlock, uint64 minDepositBlockDistance))',
+];
+
+// Legacy NOR interface
+const NOR_ABI = [
+  'function getNodeOperator(uint256 _id, bool _fullInfo) view returns (bool active, string name, address rewardAddress, uint64 stakingLimit, uint64 stoppedValidators, uint64 totalSigningKeys, uint64 usedSigningKeys)',
+];
+
+const CLOTH_COLORS = [
+  '#3b5bdb','#2f9e44','#e67700','#862e9c',
+  '#c92a2a','#0c8599','#5c7cfa','#74b816',
+  '#f76707','#9c36b5','#1864ab','#2b8a3e',
+];
+
+function clothColor(i) { return CLOTH_COLORS[i % CLOTH_COLORS.length]; }
+
+function addrLink(addr) {
+  return `<a href="${EXPLORER}/address/${addr}" target="_blank" rel="noopener">${addr.slice(0,6)}…${addr.slice(-4)}</a>`;
+}
+
+function setStatus(msg, cls = '') {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status-cell' + (cls ? ' ' + cls : '');
+}
+
+function escHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function decodeExternalOperator(hexData) {
+  const raw = hexData.startsWith('0x') ? hexData.slice(2) : hexData;
+  if (raw.length !== 20) return null;
+  const type = parseInt(raw.slice(0, 2), 16);
+  const moduleId = parseInt(raw.slice(2, 4), 16);
+  const noId = Number(BigInt('0x' + raw.slice(4)));
+  return { typeLabel: type === 0 ? 'NOR' : `Type ${type}`, moduleId, noId };
+}
+
+async function load() {
+  const rpc = document.getElementById('rpcUrl').value.trim();
+  if (!rpc) return;
+
+  const btn = document.getElementById('loadBtn');
+  btn.disabled = true;
+  btn.textContent = 'Loading...';
+  document.getElementById('content').innerHTML = '';
+  document.getElementById('cell-races').querySelector('.big').textContent = '—';
+  document.getElementById('cell-runners').querySelector('.big').textContent = '—';
+  setStatus('Connecting to network...');
+
+  try {
+    const provider = new ethers.JsonRpcProvider(rpc);
+    const meta = new ethers.Contract(ADDRESSES.metaRegistry, META_REGISTRY_ABI, provider);
+    const cm   = new ethers.Contract(ADDRESSES.curatedModule, CURATED_MODULE_ABI, provider);
+
+    const [groupsCount, noCount] = await Promise.all([
+      meta.getOperatorGroupsCount(),
+      cm.getNodeOperatorsCount(),
+    ]);
+
+    // index 0 is reserved (NO_GROUP_ID stone); real groups are 1..N-1
+    const N = Number(groupsCount);
+    const groupCount = N - 1;
+    const noTotal = Number(noCount);
+    setStatus(`Loading ${groupCount} group${groupCount !== 1 ? 's' : ''}...`);
+
+    const groupPromises = [];
+    for (let g = 1; g < N; g++) groupPromises.push(meta.getOperatorGroup(g));
+    const groups = await Promise.all(groupPromises);
+
+    const groupedNoIds = new Set();
+    for (const g of groups)
+      for (const sub of g.subNodeOperators)
+        groupedNoIds.add(Number(sub.nodeOperatorId));
+
+    const allNoIds = Array.from({ length: noTotal }, (_, i) => i);
+    const ungroupedIds = allNoIds.filter(id => !groupedNoIds.has(id));
+
+    setStatus(`Querying ${noTotal} operator${noTotal !== 1 ? 's' : ''}...`);
+
+    const [noDataMap, metadataMap, weightMap, bondMap] = await Promise.all([
+      batchFetch(allNoIds, id => cm.getNodeOperator(id)),
+      batchFetch(allNoIds, id => meta.getOperatorMetadata(id).catch(() => null)),
+      batchFetch(allNoIds, id => meta.getNodeOperatorWeight(id)),
+      batchFetch(allNoIds, id => cm.getNodeOperatorBalance(id)),
+    ]);
+
+    document.getElementById('cell-races').querySelector('.big').textContent = groupCount;
+    document.getElementById('cell-runners').querySelector('.big').textContent = noTotal;
+    // Resolve external operator names via LidoLocator → StakingRouter → NOR
+    const extOpNameMap = {};
+    const extOpsFlat = [];
+    for (const g of groups)
+      for (const ext of g.externalOperators) {
+        const p = decodeExternalOperator(ext.data);
+        if (p) extOpsFlat.push(p);
+      }
+
+    if (extOpsFlat.length > 0) {
+      try {
+        const locatorContract = new ethers.Contract(LIDO_LOCATOR_ADDR, LIDO_LOCATOR_ABI, provider);
+        const srAddr = await locatorContract.stakingRouter();
+        const srContract = new ethers.Contract(srAddr, STAKING_ROUTER_ABI, provider);
+
+        const uniqueModuleIds = [...new Set(extOpsFlat.map(e => e.moduleId))];
+        const moduleAddrMap = {};
+        await Promise.all(uniqueModuleIds.map(async (mid) => {
+          const mod = await srContract.getStakingModule(mid).catch(() => null);
+          if (mod) moduleAddrMap[mid] = mod.stakingModuleAddress;
+        }));
+
+        await Promise.all(extOpsFlat.map(async ({ moduleId, noId }) => {
+          const moduleAddr = moduleAddrMap[moduleId];
+          if (!moduleAddr) return;
+          const norContract = new ethers.Contract(moduleAddr, NOR_ABI, provider);
+          const result = await norContract.getNodeOperator(noId, true).catch(() => null);
+          if (result?.name) extOpNameMap[`${moduleId}-${noId}`] = result.name;
+        }));
+      } catch (e) {
+        console.warn('Could not resolve external operator names:', e);
+      }
+    }
+
+    setStatus('Loaded.', 'ok');
+    renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpNameMap, ungroupedIds);
+  } catch (err) {
+    setStatus('Error: ' + (err.shortMessage || err.message), 'error');
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Refresh';
+  }
+}
+
+async function batchFetch(ids, fn) {
+  const results = await Promise.all(ids.map(id => fn(id).catch(() => null)));
+  const map = {};
+  for (let i = 0; i < ids.length; i++) map[ids[i]] = results[i];
+  return map;
+}
+
+function fmtEth(wei) {
+  if (wei == null) return '—';
+  const eth = Number(BigInt(wei)) / 1e18;
+  return eth.toFixed(2) + ' Ξ';
+}
+
+function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpNameMap = {}, ungroupedIds = []) {
+  const content = document.getElementById('content');
+  if (!groups.length) {
+    content.innerHTML = '<div class="race-card"><div class="empty-card">No groups found.</div></div>';
+    return;
+  }
+
+  let html = '';
+  for (let i = 0; i < groups.length; i++) {
+    const gid = i + 1;
+    const { subNodeOperators, externalOperators } = groups[i];
+    const subCount = subNodeOperators.length;
+    const extCount = externalOperators.length;
+
+    const subtitleParts = [];
+    if (subCount > 0) subtitleParts.push(`${subCount} sub-operator${subCount !== 1 ? 's' : ''}`);
+    if (extCount > 0) subtitleParts.push(`${extCount} external`);
+
+    html += `
+    <div class="race-card">
+      <div class="race-header" onclick="toggleRace(${gid})">
+        <span class="race-num-badge">${gid}.</span>
+        <span class="race-title">Group #${gid}</span>
+        <span class="race-subtitle">${escHtml(subtitleParts.join(' · '))}</span>
+        <span class="race-chev" id="chev-${gid}">▼</span>
+      </div>
+      <div class="race-body" id="body-${gid}">
+    `;
+
+    if (subCount > 0) {
+      html += `<table class="runners">
+      <colgroup>
+        <col style="width:36px">
+        <col style="width:54px">
+        <col>
+        <col style="width:82px">
+        <col style="width:64px">
+        <col style="width:84px">
+        <col style="width:64px">
+        <col style="width:64px">
+        <col style="width:96px">
+        <col style="width:64px">
+        <col style="width:96px">
+        <col style="width:82px">
+        <col style="width:96px">
+        <col style="width:96px">
+      </colgroup>
+      <thead><tr>
+        <th></th>
+        <th>NO ID</th>
+        <th>Name</th>
+        <th style="text-align:right">Share</th>
+        <th style="text-align:right">Added</th>
+        <th style="text-align:right">Deposited</th>
+        <th style="text-align:right">Vetted</th>
+        <th style="text-align:right">Exited</th>
+        <th style="text-align:right">Depositable</th>
+        <th style="text-align:right">Queued</th>
+        <th style="text-align:right">Balance</th>
+        <th style="text-align:right">Weight</th>
+        <th>Manager</th>
+        <th>Rewards</th>
+      </tr></thead><tbody>`;
+
+      for (let ri = 0; ri < subNodeOperators.length; ri++) {
+        const sub  = subNodeOperators[ri];
+        const id   = Number(sub.nodeOperatorId);
+        const pct  = (Number(sub.share) / 100).toFixed(2) + '%';
+        const no   = noDataMap[id];
+        const md   = metadataMap[id];
+        const name = md?.name || '';
+        const desc = md?.description || '';
+        const wt   = weightMap[id] != null ? Number(weightMap[id]) : null;
+        const bond = bondMap[id] != null ? bondMap[id] : null;
+        const color = clothColor(ri);
+
+        const nameCell = name
+          ? desc
+            ? `<details class="name-details"><summary>${escHtml(name)}</summary><div class="td-desc">${escHtml(desc)}</div></details>`
+            : escHtml(name)
+          : `<span style="color:var(--text-3)">#${id}</span>`;
+
+        html += `<tr>
+          <td class="td-cloth"><div class="cloth" style="background:${color}">${ri + 1}</div></td>
+          <td class="td-noid">${id}</td>
+          <td class="td-name">${nameCell}</td>
+          <td class="td-share">${pct}</td>
+          <td class="td-num">${no ? Number(no.totalAddedKeys)            : '—'}</td>
+          <td class="td-num">${no ? Number(no.totalDepositedKeys)        : '—'}</td>
+          <td class="td-num">${no ? Number(no.totalVettedKeys)           : '—'}</td>
+          <td class="td-num">${no ? Number(no.totalExitedKeys)           : '—'}</td>
+          <td class="td-num">${no ? Number(no.depositableValidatorsCount): '—'}</td>
+          <td class="td-num">${no ? Number(no.enqueuedCount)             : '—'}</td>
+          <td class="td-bond">${fmtEth(bond)}</td>
+          <td class="td-wt">${wt !== null ? wt.toLocaleString() : '—'}</td>
+          <td class="td-addr">${no ? addrLink(no.managerAddress) : '—'}</td>
+          <td class="td-addr">${no ? addrLink(no.rewardAddress)  : '—'}</td>
+        </tr>`;
+      }
+
+      html += `</tbody></table>`;
+    }
+
+    if (extCount > 0) {
+      html += `<div class="correspondents"><span class="corr-lbl">External Operator</span>`;
+      for (const ext of externalOperators) {
+        const p = decodeExternalOperator(ext.data);
+        if (p) {
+          const extName = extOpNameMap[`${p.moduleId}-${p.noId}`];
+          html += `<span class="corr-entry">
+            <span class="corr-type">${escHtml(p.typeLabel)}</span>
+            ${extName ? `<span class="corr-val">${escHtml(extName)}</span>` : ''}
+            <span style="color:var(--text-3)">module <span class="corr-val">${p.moduleId}</span> · no. <span class="corr-val">${p.noId}</span></span>
+            <span class="corr-hex">${escHtml(ext.data)}</span>
+          </span>`;
+        } else {
+          html += `<span class="corr-entry"><span class="corr-hex">${escHtml(ext.data)}</span></span>`;
+        }
+      }
+      html += `</div>`;
+    }
+
+    if (!subCount && !extCount) {
+      html += `<div class="empty-card">No operators declared.</div>`;
+    }
+
+    html += `</div></div>`;
+  }
+
+  if (ungroupedIds.length > 0) {
+    html += `
+    <div class="race-card">
+      <div class="race-header" onclick="toggleRace('ungrouped')">
+        <span class="race-num-badge" style="color:var(--text-3)">—</span>
+        <span class="race-title" style="color:var(--text-2)">Not in any group</span>
+        <span class="race-subtitle">${ungroupedIds.length} operator${ungroupedIds.length !== 1 ? 's' : ''}</span>
+        <span class="race-chev" id="chev-ungrouped">▼</span>
+      </div>
+      <div class="race-body" id="body-ungrouped">
+        <table class="runners">
+        <colgroup>
+          <col style="width:36px">
+          <col style="width:54px">
+          <col>
+          <col style="width:64px">
+          <col style="width:84px">
+          <col style="width:64px">
+          <col style="width:64px">
+          <col style="width:96px">
+          <col style="width:64px">
+          <col style="width:96px">
+          <col style="width:82px">
+          <col style="width:96px">
+          <col style="width:96px">
+        </colgroup>
+        <thead><tr>
+          <th></th>
+          <th>NO ID</th>
+          <th>Name</th>
+          <th style="text-align:right">Added</th>
+          <th style="text-align:right">Deposited</th>
+          <th style="text-align:right">Vetted</th>
+          <th style="text-align:right">Exited</th>
+          <th style="text-align:right">Depositable</th>
+          <th style="text-align:right">Queued</th>
+          <th style="text-align:right">Balance</th>
+          <th style="text-align:right">Weight</th>
+          <th>Manager</th>
+          <th>Rewards</th>
+        </tr></thead><tbody>`;
+
+    for (const id of ungroupedIds) {
+      const no   = noDataMap[id];
+      const md   = metadataMap[id];
+      const name = md?.name || '';
+      const desc = md?.description || '';
+      const wt   = weightMap[id] != null ? Number(weightMap[id]) : null;
+      const bond = bondMap[id] != null ? bondMap[id] : null;
+
+      const nameCell = name
+        ? desc
+          ? `<details class="name-details"><summary>${escHtml(name)}</summary><div class="td-desc">${escHtml(desc)}</div></details>`
+          : escHtml(name)
+        : `<span style="color:var(--text-3)">#${id}</span>`;
+
+      html += `<tr>
+        <td class="td-cloth"></td>
+        <td class="td-noid">${id}</td>
+        <td class="td-name">${nameCell}</td>
+        <td class="td-num">${no ? Number(no.totalAddedKeys)            : '—'}</td>
+        <td class="td-num">${no ? Number(no.totalDepositedKeys)        : '—'}</td>
+        <td class="td-num">${no ? Number(no.totalVettedKeys)           : '—'}</td>
+        <td class="td-num">${no ? Number(no.totalExitedKeys)           : '—'}</td>
+        <td class="td-num">${no ? Number(no.depositableValidatorsCount): '—'}</td>
+        <td class="td-num">${no ? Number(no.enqueuedCount)             : '—'}</td>
+        <td class="td-bond">${fmtEth(bond)}</td>
+        <td class="td-wt">${wt !== null ? wt.toLocaleString() : '—'}</td>
+        <td class="td-addr">${no ? addrLink(no.managerAddress) : '—'}</td>
+        <td class="td-addr">${no ? addrLink(no.rewardAddress)  : '—'}</td>
+      </tr>`;
+    }
+
+    html += `</tbody></table></div></div>`;
+  }
+
+  content.innerHTML = html;
+}
+
+function toggleRace(id) {
+  const body = document.getElementById(`body-${id}`);
+  const chev = document.getElementById(`chev-${id}`);
+  const hidden = body.style.display === 'none';
+  body.style.display = hidden ? '' : 'none';
+  chev.textContent   = hidden ? '▼' : '▶';
+}
+
+window.addEventListener('load', load);
+</script>
+</body>
+</html>
