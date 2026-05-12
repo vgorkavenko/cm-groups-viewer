@@ -153,6 +153,118 @@
     .status-cell.error { color: var(--red); font-weight: 500; }
     .status-cell.ok    { color: var(--green); font-weight: 500; }
 
+    /* ── BOND CURVES ──────────────────────────── */
+    .curves-wrap {
+      max-width: 1380px;
+      margin: 0 auto 20px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .curves-head {
+      padding: 8px 14px;
+      background: var(--surface);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      letter-spacing: 0.02em;
+      border-bottom: 1px solid var(--border);
+    }
+    .curves-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 0;
+    }
+    .curve-card {
+      padding: 14px 16px;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      scroll-margin-top: 20px;
+    }
+    .curve-svg-wrap { position: relative; }
+    .curve-svg-wrap .crosshair-x,
+    .curve-svg-wrap .crosshair-y {
+      stroke: var(--text-2);
+      stroke-width: 0.6;
+      stroke-dasharray: 2,2;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .curve-svg-wrap .crosshair-dot {
+      fill: var(--text-1);
+      stroke: var(--bg);
+      stroke-width: 1;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .curve-svg-wrap.active .crosshair-x,
+    .curve-svg-wrap.active .crosshair-y,
+    .curve-svg-wrap.active .crosshair-dot { opacity: 1; }
+    .curve-tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: var(--bg);
+      border: 1px solid var(--border-2);
+      border-radius: 4px;
+      padding: 4px 7px;
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+      font-size: 10px;
+      color: var(--text-1);
+      white-space: nowrap;
+      transform: translate(-50%, -100%);
+      margin-top: -6px;
+      opacity: 0;
+      transition: opacity 0.1s;
+      z-index: 2;
+    }
+    .curve-tooltip.visible { opacity: 1; }
+    .curve-tooltip .tt-keys { color: var(--text-2); }
+    .curve-tooltip .tt-eth { color: var(--green); font-weight: 600; }
+    .curve-card-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .curve-id-badge {
+      width: 22px; height: 22px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: #0a0a0a;
+    }
+    .curve-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-1);
+    }
+    .curve-chart svg { display: block; }
+    .curve-intervals {
+      margin-top: 8px;
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+      font-size: 10px;
+      color: var(--text-3);
+      line-height: 1.6;
+    }
+    .curve-intervals span { color: var(--text-2); }
+
+    .curve-cell {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .curve-cell .curve-id-tag {
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 4px;
+      border-radius: 3px;
+      color: #0a0a0a;
+    }
+
     /* ── GROUP SECTIONS ───────────────────────── */
     .races {
       max-width: 1380px;
@@ -213,7 +325,7 @@
     /* ── TABLE ────────────────────────────────── */
     table.runners {
       width: 100%;
-      min-width: 1200px;
+      min-width: 1230px;
       border-collapse: collapse;
       table-layout: fixed;
     }
@@ -438,6 +550,8 @@
   <div class="status-cell" id="status">Awaiting connection...</div>
 </div>
 
+<div id="curves-section"></div>
+
 <div class="races" id="content"></div>
 
 <div class="board-footer">CMv2 &middot; Hoodi Testnet &middot; All figures in validator keys</div>
@@ -459,7 +573,70 @@ const CURATED_MODULE_ABI = [
   'function getNodeOperatorsCount() view returns (uint256)',
   'function getNodeOperator(uint256 nodeOperatorId) view returns (tuple(uint32 totalAddedKeys, uint32 totalWithdrawnKeys, uint32 totalDepositedKeys, uint32 totalVettedKeys, uint32 stuckValidatorsCount, uint32 depositableValidatorsCount, uint32 targetLimit, uint8 targetLimitMode, uint32 totalExitedKeys, uint32 enqueuedCount, address managerAddress, address proposedManagerAddress, address rewardAddress, address proposedRewardAddress, bool extendedManagerPermissions) nodeOperator)',
   'function getNodeOperatorBalance(uint256 nodeOperatorId) view returns (uint256)',
+  'function ACCOUNTING() view returns (address)',
 ];
+
+const ACCOUNTING_ABI = [
+  'function getBondCurveId(uint256 nodeOperatorId) view returns (uint256)',
+  'function getCurveInfo(uint256 curveId) view returns (tuple(tuple(uint256 minKeysCount, uint256 minBond, uint256 trend)[] intervals))',
+];
+
+const CURVE_COLORS = [
+  '#60a5fa','#4ade80','#fbbf24','#f87171',
+  '#a78bfa','#34d399','#fb923c','#f472b6',
+];
+
+function curveColor(i) { return CURVE_COLORS[i % CURVE_COLORS.length]; }
+
+// Hoodi curated gate names, in deploy order. Curve IDs 1..N map to these.
+const GATE_NAMES = [
+  'Professional Operator Gate',
+  'Professional Trusted Operator Gate',
+  'Public Good Operator Gate',
+  'Decentralization Operator Gate',
+  'Extra Effort Operator Gate',
+  'Intra-Operator DVT Cluster Gate',
+  'Intra-Operator DVT Cluster Plus Gate',
+];
+
+function curveLabel(id) {
+  const name = GATE_NAMES[id - 1];
+  return name || `Curve #${id}`;
+}
+
+// Total required bond (ETH) for N keys. minBond[i] is the bond at exactly
+// minKeysCount[i] keys; trend[i] is the per-key cost beyond that within the
+// i-th interval.
+function bondForKeys(intervals, n) {
+  if (!intervals || !intervals.length || n <= 0) return 0;
+  let i = intervals.length - 1;
+  while (i > 0 && intervals[i].minKeysCount > n) i--;
+  const iv = intervals[i];
+  return iv.minBond + (n - iv.minKeysCount) * iv.trend;
+}
+
+function curveSparkline(intervals, maxKeys, color) {
+  const W = 70, H = 18, PAD = 1;
+  if (!intervals || !intervals.length) {
+    return `<svg width="${W}" height="${H}"></svg>`;
+  }
+  const last = intervals[intervals.length - 1];
+  const target = Math.max(maxKeys, last.minKeysCount + 10, 20);
+  const samples = Math.min(target, 80);
+  let maxBond = 0;
+  const pts = [];
+  for (let n = 1; n <= samples; n++) {
+    const b = bondForKeys(intervals, n);
+    pts.push([n, b]);
+    if (b > maxBond) maxBond = b;
+  }
+  const sx = (n) => ((n - 1) / (samples - 1)) * (W - 2 * PAD) + PAD;
+  const sy = (b) => H - PAD - (maxBond > 0 ? (b / maxBond) * (H - 2 * PAD) : 0);
+  const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${sx(p[0]).toFixed(1)},${sy(p[1]).toFixed(1)}`).join('');
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="overflow:visible">
+    <path d="${d}" fill="none" stroke="${color}" stroke-width="1.4" stroke-linejoin="round"/>
+  </svg>`;
+}
 
 const EXPLORER = 'https://hoodi.etherscan.io';
 
@@ -552,12 +729,31 @@ async function load() {
 
     setStatus(`Querying ${noTotal} operator${noTotal !== 1 ? 's' : ''}...`);
 
-    const [noDataMap, metadataMap, weightMap, bondMap] = await Promise.all([
+    const accountingAddr = await cm.ACCOUNTING();
+    const accounting = new ethers.Contract(accountingAddr, ACCOUNTING_ABI, provider);
+
+    const [noDataMap, metadataMap, weightMap, bondMap, curveIdMap] = await Promise.all([
       batchFetch(allNoIds, id => cm.getNodeOperator(id)),
       batchFetch(allNoIds, id => meta.getOperatorMetadata(id).catch(() => null)),
       batchFetch(allNoIds, id => meta.getNodeOperatorWeight(id)),
       batchFetch(allNoIds, id => cm.getNodeOperatorBalance(id)),
+      batchFetch(allNoIds, id => accounting.getBondCurveId(id).catch(() => null)),
     ]);
+
+    const uniqueCurveIds = [...new Set(
+      Object.values(curveIdMap).filter(v => v != null).map(v => Number(v))
+    )].sort((a, b) => a - b);
+
+    const curveInfoMap = {};
+    await Promise.all(uniqueCurveIds.map(async (id) => {
+      const info = await accounting.getCurveInfo(id).catch(() => null);
+      if (!info) return;
+      curveInfoMap[id] = info.intervals.map(iv => ({
+        minKeysCount: Number(iv.minKeysCount),
+        minBond: Number(BigInt(iv.minBond) * 10000n / 10n ** 18n) / 10000,
+        trend: Number(BigInt(iv.trend) * 10000n / 10n ** 18n) / 10000,
+      }));
+    }));
 
     document.getElementById('cell-races').querySelector('.big').textContent = groupCount;
     document.getElementById('cell-runners').querySelector('.big').textContent = noTotal;
@@ -596,7 +792,8 @@ async function load() {
     }
 
     setStatus('Loaded.', 'ok');
-    renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpNameMap, ungroupedIds);
+    renderBondCurves(uniqueCurveIds, curveInfoMap);
+    renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpNameMap, ungroupedIds, curveIdMap, curveInfoMap, uniqueCurveIds);
   } catch (err) {
     setStatus('Error: ' + (err.shortMessage || err.message), 'error');
     console.error(err);
@@ -619,7 +816,180 @@ function fmtEth(wei) {
   return eth.toFixed(2) + ' Ξ';
 }
 
-function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpNameMap = {}, ungroupedIds = []) {
+window._curveData = {};
+
+const CURVE_CHART = { W: 320, H: 130, PADL: 36, PADR: 10, PADT: 10, PADB: 22 };
+
+function renderBondCurves(curveIds, curveInfoMap) {
+  const root = document.getElementById('curves-section');
+  if (!curveIds.length) { root.innerHTML = ''; return; }
+
+  let maxKeys = 20;
+  for (const id of curveIds) {
+    const ivs = curveInfoMap[id];
+    if (!ivs?.length) continue;
+    const last = ivs[ivs.length - 1];
+    if (last.minKeysCount + 10 > maxKeys) maxKeys = last.minKeysCount + 10;
+  }
+  const samples = Math.min(Math.max(maxKeys, 20), 200);
+
+  let html = `<div class="curves-wrap">
+    <div class="curves-head">Bond Curves &middot; ${curveIds.length}</div>
+    <div class="curves-grid">`;
+
+  curveIds.forEach((id, idx) => {
+    const intervals = curveInfoMap[id];
+    const color = curveColor(idx);
+    if (!intervals?.length) {
+      html += `<div class="curve-card" id="curve-card-${id}">
+        <div class="curve-card-head">
+          <span class="curve-id-badge" style="background:${color}">${id}</span>
+          <span class="curve-name">${escHtml(curveLabel(id))} <span style="color:var(--text-3);font-weight:400">· no data</span></span>
+        </div>
+      </div>`;
+      return;
+    }
+
+    let maxBond = 0;
+    for (let n = 1; n <= samples; n++) {
+      const b = bondForKeys(intervals, n);
+      if (b > maxBond) maxBond = b;
+    }
+    window._curveData[id] = { intervals, color, samples, maxBond };
+
+    const intervalsTxt = intervals.map(iv =>
+      `<div><span>≥${iv.minKeysCount} keys</span> · ${iv.trend} Ξ/key</div>`
+    ).join('');
+    html += `<div class="curve-card" id="curve-card-${id}">
+      <div class="curve-card-head">
+        <span class="curve-id-badge" style="background:${color}">${id}</span>
+        <span class="curve-name">${escHtml(curveLabel(id))}</span>
+      </div>
+      <div class="curve-svg-wrap" data-curve-id="${id}">
+        ${bigCurveSvg(intervals, samples, maxBond, color)}
+        <div class="curve-tooltip" id="curve-tt-${id}"></div>
+      </div>
+      <div class="curve-intervals">${intervalsTxt}</div>
+    </div>`;
+  });
+
+  html += `</div></div>`;
+  root.innerHTML = html;
+
+  // Wire up hover interactions
+  root.querySelectorAll('.curve-svg-wrap').forEach(wrap => {
+    const id = wrap.dataset.curveId;
+    wrap.addEventListener('mousemove', (e) => updateCrosshair(id, wrap, e));
+    wrap.addEventListener('mouseleave', () => {
+      wrap.classList.remove('active');
+      document.getElementById(`curve-tt-${id}`)?.classList.remove('visible');
+    });
+  });
+}
+
+function bigCurveSvg(intervals, samples, maxBond, color) {
+  const { W, H, PADL, PADR, PADT, PADB } = CURVE_CHART;
+  const innerW = W - PADL - PADR, innerH = H - PADT - PADB;
+  const pts = [];
+  for (let n = 1; n <= samples; n++) {
+    pts.push([n, bondForKeys(intervals, n)]);
+  }
+  const sx = (n) => PADL + ((n - 1) / (samples - 1)) * innerW;
+  const sy = (b) => PADT + innerH - (maxBond > 0 ? (b / maxBond) * innerH : 0);
+  const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${sx(p[0]).toFixed(1)},${sy(p[1]).toFixed(1)}`).join('');
+  const area = d + `L${sx(samples).toFixed(1)},${(PADT + innerH).toFixed(1)} L${sx(1).toFixed(1)},${(PADT + innerH).toFixed(1)} Z`;
+
+  // Y-axis ticks at 0, ~half, max
+  const yTicks = [0, maxBond / 2, maxBond];
+  const yTickEls = yTicks.map(v => `
+    <text x="${PADL - 4}" y="${sy(v) + 3}" font-size="9" fill="var(--text-3)" text-anchor="end" font-family="SF Mono, monospace">${v.toFixed(v < 10 ? 1 : 0)}Ξ</text>
+    <line x1="${PADL}" y1="${sy(v)}" x2="${W - PADR}" y2="${sy(v)}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="${v === 0 ? '' : '1,2'}"/>
+  `).join('');
+
+  // X-axis ticks every ~25% of samples
+  const xTickCounts = [1, Math.round(samples * 0.33), Math.round(samples * 0.66), samples];
+  const xTickEls = xTickCounts.map(n => `
+    <text x="${sx(n)}" y="${H - 4}" font-size="9" fill="var(--text-3)" text-anchor="${n === 1 ? 'start' : n === samples ? 'end' : 'middle'}" font-family="SF Mono, monospace">${n}</text>
+  `).join('');
+
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    ${yTickEls}
+    <path d="${area}" fill="${color}" fill-opacity="0.12"/>
+    <path d="${d}" fill="none" stroke="${color}" stroke-width="1.4" stroke-linejoin="round"/>
+    <line x1="${PADL}" y1="${PADT}" x2="${PADL}" y2="${PADT + innerH}" stroke="var(--border-2)" stroke-width="0.5"/>
+    ${xTickEls}
+    <line class="crosshair-x" x1="0" y1="${PADT}" x2="0" y2="${PADT + innerH}"/>
+    <line class="crosshair-y" x1="${PADL}" y1="0" x2="${W - PADR}" y2="0"/>
+    <circle class="crosshair-dot" cx="0" cy="0" r="3"/>
+    <rect x="${PADL}" y="${PADT}" width="${innerW}" height="${innerH}" fill="transparent" pointer-events="all"/>
+  </svg>`;
+}
+
+function updateCrosshair(curveId, wrap, evt) {
+  const data = window._curveData[curveId];
+  if (!data) return;
+  const { intervals, samples, maxBond } = data;
+  const { W, H, PADL, PADR, PADT, PADB } = CURVE_CHART;
+  const innerW = W - PADL - PADR, innerH = H - PADT - PADB;
+
+  const rect = wrap.getBoundingClientRect();
+  // Account for SVG scaling to wrap width
+  const scaleX = rect.width / W;
+  const scaleY = rect.height / H;
+  const mx = (evt.clientX - rect.left) / scaleX;
+  if (mx < PADL || mx > W - PADR) {
+    wrap.classList.remove('active');
+    document.getElementById(`curve-tt-${curveId}`)?.classList.remove('visible');
+    return;
+  }
+
+  // Snap to integer key count
+  const rawN = ((mx - PADL) / innerW) * (samples - 1) + 1;
+  const n = Math.max(1, Math.min(samples, Math.round(rawN)));
+  const bond = bondForKeys(intervals, n);
+
+  const cx = PADL + ((n - 1) / (samples - 1)) * innerW;
+  const cy = PADT + innerH - (maxBond > 0 ? (bond / maxBond) * innerH : 0);
+
+  const svg = wrap.querySelector('svg');
+  const cxLine = svg.querySelector('.crosshair-x');
+  const cyLine = svg.querySelector('.crosshair-y');
+  const dot = svg.querySelector('.crosshair-dot');
+  cxLine.setAttribute('x1', cx); cxLine.setAttribute('x2', cx);
+  cyLine.setAttribute('y1', cy); cyLine.setAttribute('y2', cy);
+  dot.setAttribute('cx', cx); dot.setAttribute('cy', cy);
+  wrap.classList.add('active');
+
+  // Tooltip — anchor to dot in DOM coords
+  const tt = document.getElementById(`curve-tt-${curveId}`);
+  tt.innerHTML = `<span class="tt-keys">${n} keys</span> · <span class="tt-eth">${bond.toFixed(bond < 10 ? 2 : 1)} Ξ</span>`;
+  tt.style.left = (cx * scaleX) + 'px';
+  tt.style.top = (cy * scaleY) + 'px';
+  tt.classList.add('visible');
+}
+
+function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpNameMap = {}, ungroupedIds = [], curveIdMap = {}, curveInfoMap = {}, uniqueCurveIds = []) {
+  const curveColorMap = {};
+  uniqueCurveIds.forEach((id, i) => { curveColorMap[id] = curveColor(i); });
+
+  let globalMaxKeys = 20;
+  for (const id of uniqueCurveIds) {
+    const ivs = curveInfoMap[id];
+    if (!ivs?.length) continue;
+    const last = ivs[ivs.length - 1];
+    if (last.minKeysCount + 10 > globalMaxKeys) globalMaxKeys = last.minKeysCount + 10;
+  }
+
+  function curveCell(noId) {
+    const cid = curveIdMap[noId];
+    if (cid == null) return '<span style="color:var(--text-3)">—</span>';
+    const cidNum = Number(cid);
+    const color = curveColorMap[cidNum] || 'var(--text-2)';
+    return `<a href="#curve-card-${cidNum}" class="curve-cell" title="${escHtml(curveLabel(cidNum))}">
+      <span class="curve-id-tag" style="background:${color}">${cidNum}</span>
+    </a>`;
+  }
+
   const content = document.getElementById('content');
   if (!groups.length) {
     content.innerHTML = '<div class="race-card"><div class="empty-card">No groups found.</div></div>';
@@ -654,15 +1024,16 @@ function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpN
         <col style="width:36px">
         <col style="width:54px">
         <col>
-        <col style="width:82px">
-        <col style="width:64px">
-        <col style="width:84px">
-        <col style="width:64px">
-        <col style="width:64px">
-        <col style="width:96px">
-        <col style="width:64px">
-        <col style="width:96px">
-        <col style="width:82px">
+        <col style="width:74px">
+        <col style="width:60px">
+        <col style="width:80px">
+        <col style="width:60px">
+        <col style="width:60px">
+        <col style="width:90px">
+        <col style="width:60px">
+        <col style="width:90px">
+        <col style="width:40px">
+        <col style="width:76px">
         <col style="width:96px">
         <col style="width:96px">
       </colgroup>
@@ -678,6 +1049,7 @@ function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpN
         <th style="text-align:right">Depositable</th>
         <th style="text-align:right">Queued</th>
         <th style="text-align:right">Balance</th>
+        <th>Curve</th>
         <th style="text-align:right">Weight</th>
         <th>Manager</th>
         <th>Rewards</th>
@@ -713,6 +1085,7 @@ function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpN
           <td class="td-num">${no ? Number(no.depositableValidatorsCount): '—'}</td>
           <td class="td-num">${no ? Number(no.enqueuedCount)             : '—'}</td>
           <td class="td-bond">${fmtEth(bond)}</td>
+          <td>${curveCell(id)}</td>
           <td class="td-wt">${wt !== null ? wt.toLocaleString() : '—'}</td>
           <td class="td-addr">${no ? addrLink(no.managerAddress) : '—'}</td>
           <td class="td-addr">${no ? addrLink(no.rewardAddress)  : '—'}</td>
@@ -763,14 +1136,15 @@ function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpN
           <col style="width:36px">
           <col style="width:54px">
           <col>
-          <col style="width:64px">
-          <col style="width:84px">
-          <col style="width:64px">
-          <col style="width:64px">
-          <col style="width:96px">
-          <col style="width:64px">
-          <col style="width:96px">
-          <col style="width:82px">
+          <col style="width:60px">
+          <col style="width:80px">
+          <col style="width:60px">
+          <col style="width:60px">
+          <col style="width:90px">
+          <col style="width:60px">
+          <col style="width:90px">
+          <col style="width:40px">
+          <col style="width:76px">
           <col style="width:96px">
           <col style="width:96px">
         </colgroup>
@@ -785,6 +1159,7 @@ function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpN
           <th style="text-align:right">Depositable</th>
           <th style="text-align:right">Queued</th>
           <th style="text-align:right">Balance</th>
+          <th>Curve</th>
           <th style="text-align:right">Weight</th>
           <th>Manager</th>
           <th>Rewards</th>
@@ -815,6 +1190,7 @@ function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpN
         <td class="td-num">${no ? Number(no.depositableValidatorsCount): '—'}</td>
         <td class="td-num">${no ? Number(no.enqueuedCount)             : '—'}</td>
         <td class="td-bond">${fmtEth(bond)}</td>
+        <td>${curveCell(id)}</td>
         <td class="td-wt">${wt !== null ? wt.toLocaleString() : '—'}</td>
         <td class="td-addr">${no ? addrLink(no.managerAddress) : '—'}</td>
         <td class="td-addr">${no ? addrLink(no.rewardAddress)  : '—'}</td>
