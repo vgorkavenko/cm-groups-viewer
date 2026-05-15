@@ -697,29 +697,34 @@
       letter-spacing: 0;
       margin-bottom: 6px;
     }
-    /* #id  grp  name                    bar   value */
+    /* #id  grp  name                    bar   value  gap */
     .alloc-item {
       display: grid;
-      grid-template-columns: 30px 16px minmax(0, 1fr) 80px 100px 56px;
+      grid-template-columns: 30px 16px minmax(0, 1fr) 80px 90px 50px;
       align-items: center;
       gap: 6px;
       font-family: 'SF Mono', 'Roboto Mono', monospace;
       font-size: 10px;
-      padding: 3px 0;
+      padding: 3px 10px 3px 0;
       border-bottom: 1px solid var(--border);
     }
     .alloc-item:last-of-type { border-bottom: none; }
     .alloc-head {
       display: grid;
-      grid-template-columns: 30px 16px minmax(0, 1fr) 80px 100px 56px;
+      grid-template-columns: 30px 16px minmax(0, 1fr) 80px 90px 50px;
       gap: 6px;
       font-size: 10px;
       font-weight: 600;
       color: var(--text-3);
       letter-spacing: 0.03em;
-      padding-bottom: 4px;
+      padding: 0 10px 4px 0;
       border-bottom: 1px solid var(--border);
       margin-bottom: 1px;
+    }
+    /* When a column has an active simulation, widen value/gap to fit "cur+Δ" and "old → new" */
+    .queues-col.sim-active .alloc-item,
+    .queues-col.sim-active .alloc-head {
+      grid-template-columns: 30px 16px minmax(0, 1fr) 70px 140px 100px;
     }
     .alloc-head-val { text-align: right; }
     .qi-grp {
@@ -752,6 +757,7 @@
       background: var(--border-2);
       border-radius: 2px;
       overflow: hidden;
+      position: relative;
     }
     .qi-bar-pct {
       font-size: 9px;
@@ -765,7 +771,18 @@
       height: 100%;
       border-radius: 2px;
       min-width: 2px;
+      position: absolute;
+      top: 0;
+      left: 0;
     }
+    .qi-bar-add { animation: simPulse 1.8s ease-in-out infinite; }
+    @keyframes simPulse {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.55; }
+    }
+    .qi-val-base { color: var(--text-3); }
+    .qi-val-add  { color: var(--blue); margin-left: 3px; font-weight: 600; }
+    .qi-gap-arrow { color: var(--text-3); margin: 0 3px; }
     .qi-val {
       color: var(--text-2);
       text-align: right;
@@ -815,6 +832,62 @@
     .alloc-grp-detail .alloc-item {
       background: var(--bg);
     }
+
+    /* ── SIM PANEL ──────────────────────────── */
+    .sim-panel {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border-2);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .sim-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sim-lbl {
+      font-size: 10px;
+      color: var(--text-3);
+      font-family: 'Inter', sans-serif;
+      flex-shrink: 0;
+    }
+    .sim-input {
+      background: var(--surface);
+      border: 1px solid var(--border-2);
+      border-radius: 4px;
+      color: var(--text-1);
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+      font-size: 11px;
+      padding: 3px 7px;
+      width: 90px;
+      outline: none;
+      -moz-appearance: textfield;
+    }
+    .sim-input::-webkit-outer-spin-button,
+    .sim-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .sim-input:focus { border-color: var(--blue); }
+    .sim-btn {
+      background: var(--surface);
+      border: 1px solid var(--border-2);
+      border-radius: 4px;
+      color: var(--text-2);
+      cursor: pointer;
+      font-size: 11px;
+      padding: 3px 10px;
+      font-family: 'Inter', sans-serif;
+    }
+    .sim-btn:hover { background: var(--hover); color: var(--text-1); }
+    .sim-btn:disabled { opacity: 0.4; cursor: default; }
+    .sim-btn-reset { color: var(--text-3); }
+    .sim-status {
+      font-size: 10px;
+      font-family: 'Inter', sans-serif;
+      color: var(--text-3);
+    }
+    .sim-status.err { color: var(--red); }
+    .sim-status.ok  { color: var(--blue); }
 
     /* ── FOOTER ───────────────────────────────── */
     .board-footer {
@@ -894,6 +967,12 @@ const CURATED_MODULE_ABI = [
   'function getDepositAllocationTargets() view returns (uint256[] currentValidators, uint256[] targetValidators)',
   'function getTopUpAllocationTargets() view returns (uint256[] currentAllocations, uint256[] targetAllocations)',
   'function getNodeOperatorWeightAndExternalStake(uint256 nodeOperatorId) view returns (uint256 weight, uint256 externalStake)',
+  'function getDepositsAllocation(uint256 maxDepositAmount) view returns (uint256 allocated, uint256[] operatorIds, uint256[] allocations)',
+  'function obtainDepositData(uint256 depositsCount, bytes depositCalldata) returns (bytes publicKeys, bytes signatures)',
+  'function getSigningKeys(uint256 nodeOperatorId, uint256 startIndex, uint256 keysCount) view returns (bytes)',
+  'function STAKING_ROUTER_ROLE() view returns (bytes32)',
+  'function getRoleMember(bytes32 role, uint256 index) view returns (address)',
+  'function getRoleMemberCount(bytes32 role) view returns (uint256)',
 ];
 
 const ACCOUNTING_ABI = [
@@ -905,7 +984,7 @@ const PARAMETERS_REGISTRY_ABI = [
   'function getCurveParameters(uint256 curveId) view returns (tuple(uint256 keyRemovalCharge, uint256 generalDelayedPenaltyAdditionalFine, uint256 keysLimit, uint32 queuePriority, uint32 queueMaxDeposits, tuple(uint256 minKeyNumber, uint256 value)[] rewardShareData, tuple(uint256 minKeyNumber, uint256 value)[] performanceLeewayData, uint256 strikesLifetime, uint256 strikesThreshold, uint256 badPerformancePenalty, uint256 attestationsWeight, uint256 blocksWeight, uint256 syncWeight, uint256 allowedExitDelay, uint256 exitDelayFee, uint256 maxElWithdrawalRequestFee) params)',
 ];
 
-function renderAllocations({ metadataMap, depositTargets, topUpTargets, groupMap, noDataMap }) {
+function renderAllocations({ metadataMap, depositTargets, topUpTargets, groupMap, noDataMap, cm, provider, stakingRouter }) {
   const root = document.getElementById('queues-section');
   if (!root) return;
 
@@ -927,6 +1006,7 @@ function renderAllocations({ metadataMap, depositTargets, topUpTargets, groupMap
         name: metadataMap?.[i]?.name,
         groupId: groupMap?.[i] ?? null,
         depositable: no ? Number(no.depositableValidatorsCount) : 0,
+        totalDeposited: no ? Number(no.totalDepositedKeys) : 0,
       });
     }
   }
@@ -954,6 +1034,15 @@ function renderAllocations({ metadataMap, depositTargets, topUpTargets, groupMap
 
   // ── State ──────────────────────────────────────────────────────────
   const expanded = new Set();
+  // depSim: Map<opId, addedValidators (Number)>  | null
+  // topSim: Map<opId, addedWei (BigInt)>          | null
+  // Each also carries a sidecar `_total` field.
+  let depSim = null;
+  let topSim = null;
+  let depBusy = false;
+  let topBusy = false;
+  let depErr  = null;
+  let topErr  = null;
 
   function sortByGap(rows, isBig) {
     if (isBig) return [...rows].sort((a, b) => (a.gap > b.gap ? 1 : a.gap < b.gap ? -1 : 0));
@@ -976,20 +1065,62 @@ function renderAllocations({ metadataMap, depositTargets, topUpTargets, groupMap
     return '<div class="qi-bar-fill" style="width:' + Math.min(pct, 100).toFixed(1) + '%;background:' + color + '"></div>';
   }
 
+  // Two-segment bar: existing (darker) + added overlay (lighter).
+  function buildBarWithAdd(pctCur, pctAdd, baseColor) {
+    let html = '';
+    if (pctCur > 0) html += '<div class="qi-bar-fill" style="width:' + Math.min(pctCur,100).toFixed(1) + '%;background:' + baseColor + ';opacity:0.55"></div>';
+    if (pctAdd > 0) {
+      const start = Math.min(pctCur, 100);
+      const w = Math.min(pctAdd, 100 - start);
+      if (w > 0) html += '<div class="qi-bar-fill qi-bar-add" style="left:' + start.toFixed(1) + '%;width:' + w.toFixed(1) + '%;background:' + baseColor + '"></div>';
+    }
+    return html;
+  }
+
+  function getSim(isTopUp) { return isTopUp ? topSim : depSim; }
+  function getAddForOp(id, isTopUp) {
+    const sim = getSim(isTopUp);
+    if (!sim) return null;
+    return sim.get(id) ?? (isTopUp ? 0n : 0);
+  }
+
   function buildOpRow(r, isTopUp) {
-    const at = r.atTarget;
-    const barColor = at ? 'var(--green)' : 'var(--blue)';
-    const fill = buildBar(r.pct, barColor);
-    const valHtml = isTopUp
-      ? fmtEthVal(r.cur) + ' / ' + fmtEthAmount(r.tgt)
-      : r.cur + ' / ' + r.tgt;
-    const pctLbl = Math.round(r.pct) + '%';
-    const gapHtml = fmtGap(r.gap, isTopUp);
-    const grpHtml = r.groupId != null
-      ? '<a class="qi-grp qi-grp-link" style="color:var(--text-2)" onclick="scrollToGroup(' + r.groupId + ')">' + r.groupId + '</a>'
-      : '<span class="qi-grp" style="color:var(--text-3)">—</span>';
-    const dim = !isTopUp && !at && r.depositable === 0;
-    const titleAttr = dim ? ' title="no depositable keys — will not receive deposits"' : '';
+    const sim = getSim(isTopUp);
+    const add = sim ? (sim.get(r.id) ?? (isTopUp ? 0n : 0)) : null;
+    const hasAdd = sim && (isTopUp ? (add > 0n) : (add > 0));
+    const newCur = sim ? (isTopUp ? (r.cur + add) : (r.cur + add)) : r.cur;
+    const newGap = sim ? (isTopUp ? (newCur - r.tgt) : (newCur - r.tgt)) : r.gap;
+    const newAt  = isTopUp ? (newCur >= r.tgt) : (newCur >= r.tgt);
+
+    const pctCur = r.pct;
+    const pctNew = sim
+      ? (isTopUp ? (r.tgt > 0n ? Number(newCur * 10000n / r.tgt) / 100 : 0) : (r.tgt > 0 ? newCur / r.tgt * 100 : 0))
+      : pctCur;
+    const pctAdd = Math.max(0, pctNew - pctCur);
+
+    const barColor = (sim ? newAt : r.atTarget) ? 'var(--green)' : 'var(--blue)';
+    const fill = sim ? buildBarWithAdd(pctCur, pctAdd, barColor) : buildBar(pctCur, barColor);
+    const pctLbl = (sim ? Math.round(pctNew) : Math.round(pctCur)) + '%';
+
+    let valHtml, gapHtml;
+    if (sim && hasAdd) {
+      if (isTopUp) {
+        valHtml = '<span class="qi-val-base">' + fmtEthVal(r.cur) + '</span>'
+          + '<span class="qi-val-add">+' + fmtEthVal(add) + '</span>'
+          + ' / ' + fmtEthAmount(r.tgt);
+      } else {
+        valHtml = '<span class="qi-val-base">' + r.cur + '</span>'
+          + '<span class="qi-val-add">+' + add + '</span>'
+          + ' / ' + r.tgt;
+      }
+      gapHtml = fmtGap(r.gap, isTopUp) + ' <span class="qi-gap-arrow">→</span> ' + fmtGap(newGap, isTopUp);
+    } else {
+      valHtml = isTopUp ? (fmtEthVal(r.cur) + ' / ' + fmtEthAmount(r.tgt)) : (r.cur + ' / ' + r.tgt);
+      gapHtml = fmtGap(r.gap, isTopUp);
+    }
+
+    const dim = !isTopUp && r.depositable === 0;
+    const titleAttr = dim ? ' title="depositable=0 — cannot receive deposits"' : '';
     return '<div class="alloc-item' + (dim ? ' alloc-item-dim' : '') + '"' + titleAttr + '>'
       + '<span></span><span></span>'
       + '<span class="qi-name"><span class="qi-noid" style="margin-right:6px">#' + r.id + '</span>' + (r.name ? escHtml(r.name) : '') + '</span>'
@@ -1002,14 +1133,48 @@ function renderAllocations({ metadataMap, depositTargets, topUpTargets, groupMap
   function buildGroupRow(g, isTopUp, prefix) {
     const key = prefix + '-' + (g.groupId == null ? 'un' : g.groupId);
     const isExp = expanded.has(key);
-    const at = g.atTarget;
-    const barColor = at ? 'var(--green)' : 'var(--blue)';
-    const fill = buildBar(g.pct, barColor);
-    const valHtml = isTopUp
-      ? fmtEthVal(g.cur) + ' / ' + fmtEthAmount(g.tgt)
-      : g.cur + ' / ' + g.tgt;
-    const pctLbl = Math.round(g.pct) + '%';
-    const gapHtml = fmtGap(g.gap, isTopUp);
+    const sim = getSim(isTopUp);
+
+    // Aggregate sim addition across rows
+    let add = isTopUp ? 0n : 0;
+    if (sim) {
+      for (const r of g.rows) {
+        const a = sim.get(r.id);
+        if (a == null) continue;
+        if (isTopUp) add = add + a; else add = add + a;
+      }
+    }
+    const hasAdd = sim && (isTopUp ? (add > 0n) : (add > 0));
+    const newCur = sim ? (isTopUp ? (g.cur + add) : (g.cur + add)) : g.cur;
+    const newGap = sim ? (isTopUp ? (newCur - g.tgt) : (newCur - g.tgt)) : g.gap;
+    const newAt  = isTopUp ? (newCur >= g.tgt) : (newCur >= g.tgt);
+
+    const pctCur = g.pct;
+    const pctNew = sim
+      ? (isTopUp ? (g.tgt > 0n ? Number(newCur * 10000n / g.tgt) / 100 : 0) : (g.tgt > 0 ? newCur / g.tgt * 100 : 0))
+      : pctCur;
+    const pctAdd = Math.max(0, pctNew - pctCur);
+
+    const barColor = (sim ? newAt : g.atTarget) ? 'var(--green)' : 'var(--blue)';
+    const fill = sim ? buildBarWithAdd(pctCur, pctAdd, barColor) : buildBar(pctCur, barColor);
+    const pctLbl = (sim ? Math.round(pctNew) : Math.round(pctCur)) + '%';
+
+    let valHtml, gapHtml;
+    if (sim && hasAdd) {
+      if (isTopUp) {
+        valHtml = '<span class="qi-val-base">' + fmtEthVal(g.cur) + '</span>'
+          + '<span class="qi-val-add">+' + fmtEthVal(add) + '</span>'
+          + ' / ' + fmtEthAmount(g.tgt);
+      } else {
+        valHtml = '<span class="qi-val-base">' + g.cur + '</span>'
+          + '<span class="qi-val-add">+' + add + '</span>'
+          + ' / ' + g.tgt;
+      }
+      gapHtml = fmtGap(g.gap, isTopUp) + ' <span class="qi-gap-arrow">→</span> ' + fmtGap(newGap, isTopUp);
+    } else {
+      valHtml = isTopUp ? (fmtEthVal(g.cur) + ' / ' + fmtEthAmount(g.tgt)) : (g.cur + ' / ' + g.tgt);
+      gapHtml = fmtGap(g.gap, isTopUp);
+    }
 
     let grpHtml, label;
     if (g.groupId != null) {
@@ -1062,8 +1227,51 @@ function renderAllocations({ metadataMap, depositTargets, topUpTargets, groupMap
     return html;
   }
 
+  function buildSimPanel(isTopUp) {
+    const sim   = getSim(isTopUp);
+    const busy  = isTopUp ? topBusy : depBusy;
+    const err   = isTopUp ? topErr  : depErr;
+    const ph    = isTopUp ? 'ETH' : 'count';
+    const stepAttr = isTopUp ? '' : ' step="1"';
+    // Eligible operators in this column (depositable > 0 for deposit; for top-up we don't easily know capacity, count rows below target).
+    const elig = isTopUp
+      ? topUpRows.filter(r => r.cur < r.tgt).length
+      : depositRows.filter(r => r.depositable > 0).length;
+    const eligTotal = isTopUp
+      ? null
+      : depositRows.reduce((s, r) => s + (r.depositable > 0 ? r.depositable : 0), 0);
+    let status = '';
+    if (busy) status = '<span class="sim-status">simulating…</span>';
+    else if (err && sim == null) status = '<span class="sim-status err">' + escHtml(err) + '</span>';
+    else if (sim) {
+      const totLbl = isTopUp ? (fmtEthVal(sim._total) + ' ETH') : (sim._total + ' val');
+      let extra = '';
+      if (!isTopUp && sim._total === 0) {
+        extra = ' · ' + elig + ' eligible op' + (elig !== 1 ? 's' : '') + ', ' + eligTotal + ' depositable key' + (eligTotal !== 1 ? 's' : '') + ' total';
+      }
+      status = '<span class="sim-status ok">applied: ' + totLbl + extra + '</span>';
+    }
+    // Always show eligibility hint for deposit column when no sim is active
+    const hint = (!sim && !busy && !err && !isTopUp)
+      ? '<span class="sim-status">eligible: ' + elig + ' op' + (elig !== 1 ? 's' : '') + ' · ' + eligTotal + ' depositable key' + (eligTotal !== 1 ? 's' : '') + '</span>'
+      : '';
+    const resetBtn = sim ? '<button class="sim-btn sim-btn-reset" data-sim-reset="' + (isTopUp ? 'top' : 'dep') + '">Reset</button>' : '';
+    const disabled = busy ? ' disabled' : '';
+    return '<div class="sim-panel">'
+      + '<div class="sim-row">'
+      + '<span class="sim-lbl">Simulate</span>'
+      + '<input class="sim-input" data-sim-input="' + (isTopUp ? 'top' : 'dep') + '" type="number" min="0"' + stepAttr + ' placeholder="' + ph + '"' + disabled + ' />'
+      + '<button class="sim-btn" data-sim-apply="' + (isTopUp ? 'top' : 'dep') + '"' + disabled + '>Apply</button>'
+      + resetBtn
+      + '</div>'
+      + (status ? '<div class="sim-row">' + status + '</div>' : '')
+      + (hint   ? '<div class="sim-row">' + hint   + '</div>' : '')
+      + '</div>';
+  }
+
   function buildColumn(title, rows, isTopUp, prefix) {
-    return '<div class="queues-col">'
+    const active = !!getSim(isTopUp);
+    return '<div class="queues-col' + (active ? ' sim-active' : '') + '">'
       + '<div class="queue-col-head"><span>' + title + '</span></div>'
       + '<div class="alloc-head">'
       +   '<span></span><span style="text-align:center">#</span><span>Group</span>'
@@ -1071,6 +1279,7 @@ function renderAllocations({ metadataMap, depositTargets, topUpTargets, groupMap
       +   '<span class="alloc-head-val">gap</span>'
       + '</div>'
       + buildGroupView(rows, isTopUp, prefix)
+      + buildSimPanel(isTopUp)
       + '</div>';
   }
 
@@ -1096,6 +1305,111 @@ function renderAllocations({ metadataMap, depositTargets, topUpTargets, groupMap
       });
     });
 
+    root.querySelectorAll('[data-sim-apply]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const which = btn.dataset.simApply;
+        const isTopUp = which === 'top';
+        const input = root.querySelector('[data-sim-input="' + which + '"]');
+        const val = (input?.value || '').trim();
+        if (!val || parseFloat(val) <= 0) return;
+        await runSim(isTopUp, val);
+      });
+    });
+
+    root.querySelectorAll('[data-sim-reset]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const which = btn.dataset.simReset;
+        if (which === 'top') { topSim = null; topErr = null; }
+        else                 { depSim = null; depErr = null; }
+        rerender();
+      });
+    });
+  }
+
+  async function runSim(isTopUp, val) {
+    if (isTopUp && topBusy) return;
+    if (!isTopUp && depBusy) return;
+    if (isTopUp) { topBusy = true; topErr = null; topSim = null; }
+    else         { depBusy = true; depErr = null; depSim = null; }
+    rerender();
+    try {
+      if (isTopUp) await runTopUpSim(val);
+      else         await runDepositSim(val);
+    } catch (e) {
+      console.error('Simulation failed:', e);
+      const msg = e.shortMessage || e.message || String(e);
+      if (isTopUp) topErr = msg; else depErr = msg;
+    } finally {
+      if (isTopUp) topBusy = false; else depBusy = false;
+      rerender();
+    }
+  }
+
+  async function runTopUpSim(ethStr) {
+    if (!cm) throw new Error('No contract handle');
+    const weiAmount = ethers.parseEther(ethStr);
+    const [, opIds, allocs] = await cm.getDepositsAllocation(weiAmount);
+    const map = new Map();
+    let total = 0n;
+    for (let i = 0; i < opIds.length; i++) {
+      const a = BigInt(allocs[i] ?? 0);
+      if (a > 0n) {
+        map.set(Number(opIds[i]), a);
+        total += a;
+      }
+    }
+    map._total = total;
+    topSim = map;
+  }
+
+  async function runDepositSim(nStr) {
+    if (!cm || !provider) throw new Error('No contract handle');
+    if (!stakingRouter) throw new Error('StakingRouter address unknown — cannot impersonate');
+    const N = parseInt(nStr, 10);
+    if (!Number.isFinite(N) || N <= 0) throw new Error('Invalid N');
+
+    // staticCall obtainDepositData via raw eth_call with `from` override
+    const data = cm.interface.encodeFunctionData('obtainDepositData', [N, '0x']);
+    const raw = await provider.call({ to: ADDRESSES.curatedModule, from: stakingRouter, data });
+    const decoded = cm.interface.decodeFunctionResult('obtainDepositData', raw);
+    const pubkeysHex = decoded[0];
+    if (!pubkeysHex || pubkeysHex === '0x') {
+      depSim = new Map(); depSim._total = 0; return;
+    }
+    const pkBytes = pubkeysHex.startsWith('0x') ? pubkeysHex.slice(2) : pubkeysHex;
+    const totalKeys = pkBytes.length / 2 / 48;
+    if (!Number.isInteger(totalKeys) || totalKeys === 0) {
+      depSim = new Map(); depSim._total = 0; return;
+    }
+    // Chunk result into 48-byte (96 hex chars) pubkeys (Array preserves duplicates if any)
+    const resultPks = [];
+    for (let i = 0; i < pkBytes.length; i += 96) {
+      resultPks.push('0x' + pkBytes.slice(i, i + 96).toLowerCase());
+    }
+
+    // For each eligible operator, fetch their depositable pubkeys and build lookup
+    const eligibleOps = depositRows.filter(r => r.depositable > 0);
+    const lookup = new Map(); // pubkeyHex → opId
+    await Promise.all(eligibleOps.map(async (op) => {
+      try {
+        const keysHex = await cm.getSigningKeys(op.id, op.totalDeposited, op.depositable);
+        const s = keysHex.startsWith('0x') ? keysHex.slice(2) : keysHex;
+        for (let i = 0; i < s.length; i += 96) {
+          lookup.set('0x' + s.slice(i, i + 96).toLowerCase(), op.id);
+        }
+      } catch (e) {
+        console.warn('getSigningKeys failed for op', op.id, e);
+      }
+    }));
+
+    const counts = new Map();
+    for (const pk of resultPks) {
+      const opId = lookup.get(pk);
+      if (opId == null) continue;
+      counts.set(opId, (counts.get(opId) || 0) + 1);
+    }
+    counts._total = totalKeys;
+    depSim = counts;
   }
 
   rerender();
@@ -1332,7 +1646,16 @@ async function load() {
     }
 
     setStatus('Loaded.', 'ok');
-    try { renderAllocations({ metadataMap, depositTargets, topUpTargets, groupMap, noDataMap }); } catch(e) { console.warn('renderAllocations failed:', e); }
+
+    // Find an address with STAKING_ROUTER_ROLE for impersonation in eth_call (deposit sim).
+    let stakingRouter = null;
+    try {
+      const role = await cm.STAKING_ROUTER_ROLE();
+      const cnt  = await cm.getRoleMemberCount(role);
+      if (cnt > 0n) stakingRouter = await cm.getRoleMember(role, 0);
+    } catch (e) { console.warn('Could not resolve STAKING_ROUTER_ROLE member:', e); }
+
+    try { renderAllocations({ metadataMap, depositTargets, topUpTargets, groupMap, noDataMap, cm, provider, stakingRouter }); } catch(e) { console.warn('renderAllocations failed:', e); }
     renderBondCurves(uniqueCurveIds, curveInfoMap, curveParamsMap, curveWeightMap);
     renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpNameMap, ungroupedIds, curveIdMap, curveInfoMap, uniqueCurveIds, extStakeMap);
   } catch (err) {
