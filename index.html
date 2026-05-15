@@ -170,6 +170,39 @@
       letter-spacing: 0.02em;
       border-bottom: 1px solid var(--border);
     }
+
+    /* ── STEP CHART DROPDOWN (per-card) ──────────── */
+    .cs-section {
+      margin-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+    .cs-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0 4px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-3);
+    }
+    .cs-toggle:hover { color: var(--text-2); }
+    .cs-compact {
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+      font-size: 10px;
+      line-height: 1.7;
+      padding-bottom: 4px;
+    }
+    .cs-compact-row {
+      display: flex;
+      gap: 8px;
+    }
+    .cs-compact-row span:first-child {
+      min-width: 82px;
+      flex-shrink: 0;
+    }
+    .cs-compact-row span:last-child { color: var(--text-2); }
     .curves-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -250,6 +283,101 @@
       line-height: 1.6;
     }
     .curve-intervals span { color: var(--text-2); }
+
+    .curve-step-charts {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .curve-step-item {
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+    }
+    .curve-step-label {
+      font-size: 11px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .curve-params {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+      font-size: 10px;
+      line-height: 1.65;
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      column-gap: 12px;
+      row-gap: 1px;
+    }
+    .cp-row { display: contents; }
+    .cp-lbl { color: var(--text-3); white-space: nowrap; }
+    .cp-block {
+      grid-column: 1 / -1;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid var(--border);
+    }
+    .cp-block > .cp-lbl {
+      display: block;
+      margin-bottom: 6px;
+    }
+    .cp-val { color: var(--text-2); }
+    .cp-steps { display: flex; flex-wrap: wrap; gap: 3px; }
+
+    /* ── PERF WEIGHTS DONUT ───────────────────────── */
+    .donut-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 2px;
+    }
+    .donut-legend {
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+      font-size: 10px;
+      color: var(--text-3);
+      line-height: 1.9;
+    }
+    .donut-leg-row { display: flex; align-items: center; gap: 5px; }
+    .donut-dot {
+      width: 6px; height: 6px;
+      border-radius: 1px;
+      opacity: 0.5;
+      flex-shrink: 0;
+    }
+
+    /* ── STRIKES BADGE ────────────────────────────── */
+    .strikes-badge-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 2px;
+    }
+    .strikes-badge {
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-2);
+      background: var(--hover);
+      border: 1px solid var(--border-2);
+      border-radius: 3px;
+      padding: 1px 5px;
+    }
+    .strikes-sub {
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+      font-size: 10px;
+      color: var(--text-3);
+    }
+    .cp-step-item {
+      background: var(--hover);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0 4px;
+      color: var(--text-2);
+    }
 
     .curve-cell {
       display: inline-flex;
@@ -550,16 +678,17 @@
   <div class="status-cell" id="status">Awaiting connection...</div>
 </div>
 
-<div id="curves-section"></div>
-
 <div class="races" id="content"></div>
+
+<div id="curves-section"></div>
 
 <div class="board-footer">CMv2 &middot; Hoodi Testnet &middot; All figures in validator keys</div>
 
 <script>
 const ADDRESSES = {
-  metaRegistry: '0x857289cCBFBc4C134Cc312022a104CD9b38d8AAE',
-  curatedModule: '0x87EB69Ae51317405FD285efD2326a4a11f6173b9',
+  metaRegistry:       '0x857289cCBFBc4C134Cc312022a104CD9b38d8AAE',
+  curatedModule:      '0x87EB69Ae51317405FD285efD2326a4a11f6173b9',
+  parametersRegistry: '0xefb8e4091A75C4828826bf64595F392f87A07b37',
 };
 
 const META_REGISTRY_ABI = [
@@ -581,6 +710,10 @@ const ACCOUNTING_ABI = [
   'function getCurveInfo(uint256 curveId) view returns (tuple(tuple(uint256 minKeysCount, uint256 minBond, uint256 trend)[] intervals))',
 ];
 
+const PARAMETERS_REGISTRY_ABI = [
+  'function getCurveParameters(uint256 curveId) view returns (tuple(uint256 keyRemovalCharge, uint256 generalDelayedPenaltyAdditionalFine, uint256 keysLimit, uint32 queuePriority, uint32 queueMaxDeposits, tuple(uint256 minKeyNumber, uint256 value)[] rewardShareData, tuple(uint256 minKeyNumber, uint256 value)[] performanceLeewayData, uint256 strikesLifetime, uint256 strikesThreshold, uint256 badPerformancePenalty, uint256 attestationsWeight, uint256 blocksWeight, uint256 syncWeight, uint256 allowedExitDelay, uint256 exitDelayFee, uint256 maxElWithdrawalRequestFee) params)',
+];
+
 const CURVE_COLORS = [
   '#60a5fa','#4ade80','#fbbf24','#f87171',
   '#a78bfa','#34d399','#fb923c','#f472b6',
@@ -588,7 +721,7 @@ const CURVE_COLORS = [
 
 function curveColor(i) { return CURVE_COLORS[i % CURVE_COLORS.length]; }
 
-// Hoodi curated gate names, in deploy order. Curve IDs 1..N map to these.
+// Hoodi curated gate names, in deploy order. Curve IDs 0..N map to these.
 const GATE_NAMES = [
   'Professional Operator Gate',
   'Professional Trusted Operator Gate',
@@ -600,7 +733,7 @@ const GATE_NAMES = [
 ];
 
 function curveLabel(id) {
-  const name = GATE_NAMES[id - 1];
+  const name = GATE_NAMES[id];
   return name || `Curve #${id}`;
 }
 
@@ -741,7 +874,7 @@ async function load() {
     ]);
 
     const uniqueCurveIds = [...new Set(
-      Object.values(curveIdMap).filter(v => v != null).map(v => Number(v))
+      [0, ...Object.values(curveIdMap).filter(v => v != null).map(v => Number(v))]
     )].sort((a, b) => a - b);
 
     const curveInfoMap = {};
@@ -753,6 +886,14 @@ async function load() {
         minBond: Number(BigInt(iv.minBond) * 10000n / 10n ** 18n) / 10000,
         trend: Number(BigInt(iv.trend) * 10000n / 10n ** 18n) / 10000,
       }));
+    }));
+
+    const paramsReg = new ethers.Contract(ADDRESSES.parametersRegistry, PARAMETERS_REGISTRY_ABI, provider);
+    const curveParamsMap = {};
+    await Promise.all(uniqueCurveIds.map(async (id) => {
+      const p = await paramsReg.getCurveParameters(id).catch(() => null);
+      if (!p) return;
+      curveParamsMap[id] = p;
     }));
 
     document.getElementById('cell-races').querySelector('.big').textContent = groupCount;
@@ -792,7 +933,7 @@ async function load() {
     }
 
     setStatus('Loaded.', 'ok');
-    renderBondCurves(uniqueCurveIds, curveInfoMap);
+    renderBondCurves(uniqueCurveIds, curveInfoMap, curveParamsMap);
     renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpNameMap, ungroupedIds, curveIdMap, curveInfoMap, uniqueCurveIds);
   } catch (err) {
     setStatus('Error: ' + (err.shortMessage || err.message), 'error');
@@ -816,11 +957,123 @@ function fmtEth(wei) {
   return eth.toFixed(2) + ' Ξ';
 }
 
+function fmtEthPrecise(wei) {
+  if (wei == null) return '—';
+  const eth = Number(BigInt(wei)) / 1e18;
+  if (eth === 0) return '0 Ξ';
+  if (eth < 0.0001) return eth.toExponential(2) + ' Ξ';
+  return eth.toPrecision(4).replace(/\.?0+$/, '') + ' Ξ';
+}
+
+function fmtBP(v) {
+  const n = Number(v) / 100;
+  return n % 1 === 0 ? n + '%' : n.toFixed(2) + '%';
+}
+
+function fmtDuration(sec) {
+  const s = Number(sec);
+  if (s === 0) return '0';
+  if (s % 86400 === 0) return (s / 86400) + 'd';
+  if (s % 3600 === 0) return (s / 3600) + 'h';
+  if (s % 60 === 0) return (s / 60) + 'm';
+  return s + 's';
+}
+
+function fmtSteps(arr, fmt) {
+  if (!arr?.length) return '<span style="color:var(--text-3)">—</span>';
+  return arr.map(iv =>
+    `<span class="cp-step-item">≥${Number(iv.minKeyNumber)}: ${fmt(iv.value)}</span>`
+  ).join('');
+}
+
+function renderCurveParams(p) {
+  if (!p) return '';
+  const rows = [
+    ['Keys limit',     Number(p.keysLimit) === 0 ? '∞' : Number(p.keysLimit).toLocaleString()],
+    ['Key removal charge', fmtEthPrecise(p.keyRemovalCharge)],
+    ['Bad perf fine',  fmtEthPrecise(p.badPerformancePenalty)],
+    ['Delayed fine',   fmtEthPrecise(p.generalDelayedPenaltyAdditionalFine)],
+    ['Strikes',        `${Number(p.strikesThreshold)} hits · ${Number(p.strikesLifetime)} frames`],
+    ['Exit delay',     fmtDuration(p.allowedExitDelay)],
+    ['Exit delay fee', fmtEthPrecise(p.exitDelayFee)],
+    ['EL req fee cap', fmtEthPrecise(p.maxElWithdrawalRequestFee)],
+    ['Queue',          `priority ${Number(p.queuePriority)} · ${Number(p.queueMaxDeposits) === 0xFFFFFFFF ? 'no key count limit' : 'max ' + Number(p.queueMaxDeposits).toLocaleString()}`],
+  ];
+  const textRows = rows.map(([l, v]) =>
+    `<div class="cp-row"><span class="cp-lbl">${l}</span><span class="cp-val">${v}</span></div>`
+  ).join('');
+  return `<div class="curve-params">
+    ${textRows}
+    <div class="cp-block"><span class="cp-lbl">Strikes</span>${renderStrikesSegmented(p)}</div>
+    <div class="cp-block"><span class="cp-lbl">Perf weights</span>${renderPerfWeightsDonut(p)}</div>
+  </div>`;
+}
+
+function renderStrikesSegmented(p) {
+  const threshold = Number(p.strikesThreshold);
+  const lifetime  = Number(p.strikesLifetime);
+  return `<div class="strikes-badge-wrap">
+    <span class="strikes-badge">${threshold}</span>
+    <span class="strikes-sub">hits · within ${lifetime} frames</span>
+  </div>`;
+}
+
+function renderPerfWeightsDonut(p) {
+  const att  = Number(p.attestationsWeight);
+  const prop = Number(p.blocksWeight);
+  const sync = Number(p.syncWeight);
+  const total = att + prop + sync;
+  if (total === 0) return '';
+
+  const r = 26, cx = 36, cy = 36, SW = 7;
+  const circ = 2 * Math.PI * r;
+  const GAP  = 2;
+
+  const segs = [
+    { v: att,  color: '#60a5fa', label: `att ${att}` },
+    { v: prop, color: '#fbbf24', label: `proposal ${prop}` },
+    { v: sync, color: '#4ade80', label: `sync ${sync}` },
+  ].filter(s => s.v > 0);
+
+  const drawableLen = circ - GAP * segs.length;
+  let accum = 0;
+  const circles = segs.map(({ v, color }) => {
+    const len = (v / total) * drawableLen;
+    const svg = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}"
+      stroke-width="${SW}" stroke-dasharray="${len.toFixed(2)} ${(circ - len).toFixed(2)}"
+      stroke-dashoffset="${(-accum).toFixed(2)}" opacity="0.5"/>`;
+    accum += len + GAP;
+    return svg;
+  }).join('');
+
+  const legend = segs.map(({ color, label }) =>
+    `<div class="donut-leg-row">
+      <span class="donut-dot" style="background:${color}"></span>${label}/${total}
+    </div>`
+  ).join('');
+
+  return `<div class="donut-wrap">
+    <svg width="72" height="72" viewBox="0 0 72 72">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--border)" stroke-width="${SW}"/>
+      <g transform="rotate(-90 ${cx} ${cy})">${circles}</g>
+      <text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="10"
+        fill="var(--text-3)" font-family="SF Mono, monospace">${total}</text>
+    </svg>
+    <div class="donut-legend">${legend}</div>
+  </div>`;
+}
+
 window._curveData = {};
+window._stepData  = {};
 
 const CURVE_CHART = { W: 320, H: 130, PADL: 36, PADR: 10, PADT: 10, PADB: 22 };
 
-function renderBondCurves(curveIds, curveInfoMap) {
+function fmtStepCompact(data) {
+  if (!data?.length) return '—';
+  return data.map(iv => `≥${Number(iv.minKeyNumber)}: ${fmtBP(iv.value)}`).join(' · ');
+}
+
+function renderBondCurves(curveIds, curveInfoMap, curveParamsMap = {}) {
   const root = document.getElementById('curves-section');
   if (!curveIds.length) { root.innerHTML = ''; return; }
 
@@ -833,15 +1086,12 @@ function renderBondCurves(curveIds, curveInfoMap) {
   }
   const samples = Math.min(Math.max(maxKeys, 20), 200);
 
-  let html = `<div class="curves-wrap">
-    <div class="curves-head">Bond Curves &middot; ${curveIds.length}</div>
-    <div class="curves-grid">`;
-
+  let cardsHtml = '';
   curveIds.forEach((id, idx) => {
     const intervals = curveInfoMap[id];
     const color = curveColor(idx);
     if (!intervals?.length) {
-      html += `<div class="curve-card" id="curve-card-${id}">
+      cardsHtml += `<div class="curve-card" id="curve-card-${id}">
         <div class="curve-card-head">
           <span class="curve-id-badge" style="background:${color}">${id}</span>
           <span class="curve-name">${escHtml(curveLabel(id))} <span style="color:var(--text-3);font-weight:400">· no data</span></span>
@@ -860,24 +1110,71 @@ function renderBondCurves(curveIds, curveInfoMap) {
     const intervalsTxt = intervals.map(iv =>
       `<div><span>≥${iv.minKeysCount} keys</span> · ${iv.trend} Ξ/key</div>`
     ).join('');
-    html += `<div class="curve-card" id="curve-card-${id}">
+
+    const stepChartsHtml = (() => {
+      const p = curveParamsMap[id];
+      if (!p) return '';
+      const defs = [
+        { key: `${id}-reward`, data: p.rewardShareData,       color: '#4ade80', label: 'Reward share' },
+        { key: `${id}-leeway`, data: p.performanceLeewayData,  color: '#a78bfa', label: 'Perf leeway'  },
+      ];
+      const valid = defs.filter(({ data }) => data?.length);
+      if (!valid.length) return '';
+
+      valid.forEach(({ key, data, color }) => {
+        window._stepData[key] = { data, samples, maxVal: Math.max(...data.map(d => Number(d.value))), color };
+      });
+
+      return valid.map(({ key, data, color, label }) =>
+        `<div class="cs-section">
+          <div class="cs-toggle" onclick="toggleStepCharts('${key}')">
+            <span>${label}</span>
+            <span class="race-chev" id="step-chev-${key}">▶</span>
+          </div>
+          <div id="step-compact-${key}" class="cs-compact">
+            <div class="cs-compact-row"><span>${fmtStepCompact(data)}</span></div>
+          </div>
+          <div id="step-charts-${key}" style="display:none">
+            <div class="curve-svg-wrap" data-step-key="${key}">
+              ${stepFunctionSvg(data, samples, color)}
+              <div class="curve-tooltip" id="step-tt-${key}"></div>
+            </div>
+          </div>
+        </div>`
+      ).join('');
+    })();
+
+    cardsHtml += `<div class="curve-card" id="curve-card-${id}">
       <div class="curve-card-head">
         <span class="curve-id-badge" style="background:${color}">${id}</span>
         <span class="curve-name">${escHtml(curveLabel(id))}</span>
       </div>
-      <div class="curve-svg-wrap" data-curve-id="${id}">
-        ${bigCurveSvg(intervals, samples, maxBond, color)}
-        <div class="curve-tooltip" id="curve-tt-${id}"></div>
+      <div class="cs-section">
+        <div class="cs-toggle" onclick="toggleBondChart(${id})">
+          <span style="color:${color}">Bond curve</span>
+          <span class="race-chev" id="bond-chev-${id}">▼</span>
+        </div>
+        <div id="bond-compact-${id}" class="curve-intervals" style="display:none">${intervalsTxt}</div>
+        <div id="bond-chart-${id}">
+          <div class="curve-svg-wrap" data-curve-id="${id}">
+            ${bigCurveSvg(intervals, samples, maxBond, color)}
+            <div class="curve-tooltip" id="curve-tt-${id}"></div>
+          </div>
+          <div class="curve-intervals">${intervalsTxt}</div>
+        </div>
       </div>
-      <div class="curve-intervals">${intervalsTxt}</div>
+      ${stepChartsHtml}
+      ${renderCurveParams(curveParamsMap[id])}
     </div>`;
   });
 
-  html += `</div></div>`;
-  root.innerHTML = html;
+  root.innerHTML = `<div class="curves-wrap">
+    <div class="curves-head">Bond Curves &middot; ${curveIds.length}</div>
+    <div class="curves-grid">${cardsHtml}</div>
+  </div>`;
 
-  // Wire up hover interactions
-  root.querySelectorAll('.curve-svg-wrap').forEach(wrap => {
+  // Wire up hover — bond curves
+  root.querySelectorAll('[data-curve-id]').forEach(wrap => {
     const id = wrap.dataset.curveId;
     wrap.addEventListener('mousemove', (e) => updateCrosshair(id, wrap, e));
     wrap.addEventListener('mouseleave', () => {
@@ -885,6 +1182,36 @@ function renderBondCurves(curveIds, curveInfoMap) {
       document.getElementById(`curve-tt-${id}`)?.classList.remove('visible');
     });
   });
+
+  // Wire up hover — step charts
+  root.querySelectorAll('[data-step-key]').forEach(wrap => {
+    const key = wrap.dataset.stepKey;
+    wrap.addEventListener('mousemove', (e) => updateStepCrosshair(key, wrap, e));
+    wrap.addEventListener('mouseleave', () => {
+      wrap.classList.remove('active');
+      document.getElementById(`step-tt-${key}`)?.classList.remove('visible');
+    });
+  });
+}
+
+function toggleBondChart(id) {
+  const compact  = document.getElementById(`bond-compact-${id}`);
+  const chart    = document.getElementById(`bond-chart-${id}`);
+  const chev     = document.getElementById(`bond-chev-${id}`);
+  const expanded = chart.style.display !== 'none';
+  compact.style.display = expanded ? '' : 'none';
+  chart.style.display   = expanded ? 'none' : '';
+  chev.textContent      = expanded ? '▶' : '▼';
+}
+
+function toggleStepCharts(key) {
+  const compact  = document.getElementById(`step-compact-${key}`);
+  const charts   = document.getElementById(`step-charts-${key}`);
+  const chev     = document.getElementById(`step-chev-${key}`);
+  const expanded = charts.style.display !== 'none';
+  compact.style.display = expanded ? '' : 'none';
+  charts.style.display  = expanded ? 'none' : '';
+  chev.textContent      = expanded ? '▶' : '▼';
 }
 
 function bigCurveSvg(intervals, samples, maxBond, color) {
@@ -907,6 +1234,66 @@ function bigCurveSvg(intervals, samples, maxBond, color) {
   `).join('');
 
   // X-axis ticks every ~25% of samples
+  const xTickCounts = [1, Math.round(samples * 0.33), Math.round(samples * 0.66), samples];
+  const xTickEls = xTickCounts.map(n => `
+    <text x="${sx(n)}" y="${H - 4}" font-size="9" fill="var(--text-3)" text-anchor="${n === 1 ? 'start' : n === samples ? 'end' : 'middle'}" font-family="SF Mono, monospace">${n}</text>
+  `).join('');
+
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    ${yTickEls}
+    <path d="${area}" fill="${color}" fill-opacity="0.12"/>
+    <path d="${d}" fill="none" stroke="${color}" stroke-width="1.4" stroke-linejoin="round"/>
+    <line x1="${PADL}" y1="${PADT}" x2="${PADL}" y2="${PADT + innerH}" stroke="var(--border-2)" stroke-width="0.5"/>
+    ${xTickEls}
+    <line class="crosshair-x" x1="0" y1="${PADT}" x2="0" y2="${PADT + innerH}"/>
+    <line class="crosshair-y" x1="${PADL}" y1="0" x2="${W - PADR}" y2="0"/>
+    <circle class="crosshair-dot" cx="0" cy="0" r="3"/>
+    <rect x="${PADL}" y="${PADT}" width="${innerW}" height="${innerH}" fill="transparent" pointer-events="all"/>
+  </svg>`;
+}
+
+function stepGetVal(data, n) {
+  let v = Number(data[0].value);
+  for (const iv of data) {
+    if (Number(iv.minKeyNumber) <= n) v = Number(iv.value);
+  }
+  return v;
+}
+
+function stepFunctionSvg(data, samples, color) {
+  const { W, H, PADL, PADR, PADT, PADB } = CURVE_CHART;
+  if (!data?.length) return '';
+  const innerW = W - PADL - PADR, innerH = H - PADT - PADB;
+
+  const maxVal = Math.max(...data.map(d => Number(d.value)));
+  if (maxVal === 0) return '';
+
+  const sx = n => PADL + ((n - 1) / Math.max(samples - 1, 1)) * innerW;
+  const sy = v => PADT + innerH - (v / maxVal) * innerH;
+
+  let d = '', prevY = null;
+  for (let n = 1; n <= samples; n++) {
+    const v = stepGetVal(data, n);
+    const x = sx(n).toFixed(1), y = sy(v).toFixed(1);
+    if (prevY === null) { d += `M${x},${y}`; }
+    else if (y !== prevY) { d += `H${x}V${y}`; }
+    else { d += `H${x}`; }
+    prevY = y;
+  }
+
+  const area = d + `V${(PADT + innerH).toFixed(1)}H${sx(1).toFixed(1)}Z`;
+
+  // Y-axis ticks: 0, half, max  — same pattern as bigCurveSvg
+  const yTicks = [0, maxVal / 2, maxVal];
+  const yTickEls = yTicks.map(v => {
+    const pct = v / 100;
+    const lbl = pct % 1 === 0 ? pct + '%' : pct.toFixed(1) + '%';
+    return `
+      <text x="${PADL - 4}" y="${sy(v) + 3}" font-size="9" fill="var(--text-3)" text-anchor="end" font-family="SF Mono, monospace">${lbl}</text>
+      <line x1="${PADL}" y1="${sy(v)}" x2="${W - PADR}" y2="${sy(v)}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="${v === 0 ? '' : '1,2'}"/>`;
+  }).join('');
+
+  // X-axis ticks — identical to bigCurveSvg
   const xTickCounts = [1, Math.round(samples * 0.33), Math.round(samples * 0.66), samples];
   const xTickEls = xTickCounts.map(n => `
     <text x="${sx(n)}" y="${H - 4}" font-size="9" fill="var(--text-3)" text-anchor="${n === 1 ? 'start' : n === samples ? 'end' : 'middle'}" font-family="SF Mono, monospace">${n}</text>
@@ -965,6 +1352,43 @@ function updateCrosshair(curveId, wrap, evt) {
   tt.innerHTML = `<span class="tt-keys">${n} keys</span> · <span class="tt-eth">${bond.toFixed(bond < 10 ? 2 : 1)} Ξ</span>`;
   tt.style.left = (cx * scaleX) + 'px';
   tt.style.top = (cy * scaleY) + 'px';
+  tt.classList.add('visible');
+}
+
+function updateStepCrosshair(key, wrap, evt) {
+  const entry = window._stepData[key];
+  if (!entry) return;
+  const { data, samples, maxVal, color } = entry;
+  const { W, H, PADL, PADR, PADT, PADB } = CURVE_CHART;
+  const innerW = W - PADL - PADR, innerH = H - PADT - PADB;
+
+  const rect = wrap.getBoundingClientRect();
+  const scaleX = rect.width / W, scaleY = rect.height / H;
+  const mx = (evt.clientX - rect.left) / scaleX;
+  if (mx < PADL || mx > W - PADR) {
+    wrap.classList.remove('active');
+    document.getElementById(`step-tt-${key}`)?.classList.remove('visible');
+    return;
+  }
+
+  const rawN = ((mx - PADL) / innerW) * (samples - 1) + 1;
+  const n = Math.max(1, Math.min(samples, Math.round(rawN)));
+  const v = stepGetVal(data, n);
+  const pct = (v / 100).toFixed(2).replace(/\.?0+$/, '') + '%';
+
+  const cx = PADL + ((n - 1) / (samples - 1)) * innerW;
+  const cy = PADT + innerH - (maxVal > 0 ? (v / maxVal) * innerH : 0);
+
+  const svg = wrap.querySelector('svg');
+  svg.querySelector('.crosshair-x').setAttribute('x1', cx); svg.querySelector('.crosshair-x').setAttribute('x2', cx);
+  svg.querySelector('.crosshair-y').setAttribute('y1', cy); svg.querySelector('.crosshair-y').setAttribute('y2', cy);
+  svg.querySelector('.crosshair-dot').setAttribute('cx', cx); svg.querySelector('.crosshair-dot').setAttribute('cy', cy);
+  wrap.classList.add('active');
+
+  const tt = document.getElementById(`step-tt-${key}`);
+  tt.innerHTML = `<span class="tt-keys">${n} keys</span> · <span class="tt-eth">${pct}</span>`;
+  tt.style.left = (cx * scaleX) + 'px';
+  tt.style.top  = (cy * scaleY) + 'px';
   tt.classList.add('visible');
 }
 
