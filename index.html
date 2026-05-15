@@ -580,18 +580,17 @@
     .correspondents {
       padding: 7px 14px 7px 12px;
       border-top: 1px solid var(--border);
-      border-left: 3px solid var(--blue);
+      border-left: 3px solid var(--border-2);
       display: flex;
       align-items: center;
       gap: 10px;
       flex-wrap: wrap;
-      background: rgba(96,165,250,0.05);
     }
 
     .corr-lbl {
       font-size: 11px;
-      font-weight: 600;
-      color: var(--blue);
+      font-weight: 500;
+      color: var(--text-3);
       flex-shrink: 0;
     }
 
@@ -619,6 +618,12 @@
       font-family: 'SF Mono', 'Roboto Mono', monospace;
       font-size: 11px;
     }
+    .corr-stake {
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--green);
+    }
     .corr-hex {
       color: var(--text-3);
       font-family: 'SF Mono', 'Roboto Mono', monospace;
@@ -629,6 +634,186 @@
       padding: 16px 14px;
       color: var(--text-3);
       font-size: 12px;
+    }
+
+    /* ── QUEUES SECTION ──────────────────────── */
+    .queues-wrap {
+      max-width: 1380px;
+      margin: 20px auto 20px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .queues-head {
+      padding: 8px 14px;
+      background: var(--surface);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      letter-spacing: 0.02em;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .queues-addr {
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+      font-size: 10px;
+      color: var(--text-3);
+      text-decoration: none;
+      font-weight: 400;
+      letter-spacing: 0;
+    }
+    .queues-addr:hover { color: var(--blue); }
+    .queues-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .queues-col {
+      padding: 12px 16px;
+      border-right: 1px solid var(--border);
+    }
+    .queues-col:last-child { border-right: none; }
+    .queue-col-head {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-2);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .queue-col-meta {
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--text-3);
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+    }
+    .queue-col-sub {
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--text-3);
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0;
+      margin-bottom: 6px;
+    }
+    /* #id  grp  name                    bar   value */
+    .alloc-item {
+      display: grid;
+      grid-template-columns: 30px 16px minmax(0, 1fr) 80px 100px 56px;
+      align-items: center;
+      gap: 6px;
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+      font-size: 10px;
+      padding: 3px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .alloc-item:last-of-type { border-bottom: none; }
+    .alloc-head {
+      display: grid;
+      grid-template-columns: 30px 16px minmax(0, 1fr) 80px 100px 56px;
+      gap: 6px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-3);
+      letter-spacing: 0.03em;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1px;
+    }
+    .alloc-head-val { text-align: right; }
+    .qi-grp {
+      font-size: 10px;
+      font-weight: 600;
+      text-align: center;
+      line-height: 1;
+    }
+    .qi-grp-link { cursor: pointer; text-decoration: none; }
+    .qi-grp-link:hover { opacity: 0.6; }
+    .qi-noid { color: var(--text-3); }
+    .qi-name {
+      color: var(--text-3);
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .qi-bar-col {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      min-width: 0;
+    }
+    .qi-bar-wrap {
+      flex: 1;
+      height: 4px;
+      background: var(--border-2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .qi-bar-pct {
+      font-size: 9px;
+      color: var(--text-3);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+      min-width: 24px;
+      text-align: right;
+    }
+    .qi-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      min-width: 2px;
+    }
+    .qi-val {
+      color: var(--text-2);
+      text-align: right;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .qi-trunc {
+      font-size: 10px;
+      font-family: 'SF Mono', 'Roboto Mono', monospace;
+      color: var(--text-3);
+      padding-top: 3px;
+      grid-column: 1 / -1;
+    }
+    .queue-empty {
+      font-size: 11px;
+      color: var(--text-3);
+    }
+
+    .qi-gap {
+      font-size: 10px;
+      color: var(--text-2);
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .alloc-item-dim { opacity: 0.42; }
+
+    .alloc-grp-row {
+      cursor: pointer;
+      background: var(--surface);
+    }
+    .alloc-grp-row:hover { background: var(--hover); }
+    .grp-chev {
+      font-size: 8px;
+      color: var(--text-3);
+      display: inline-block;
+      width: 100%;
+      text-align: right;
+      padding-right: 3px;
+    }
+    .qi-name-bold {
+      color: var(--text-1) !important;
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+    }
+    .alloc-grp-detail .alloc-item {
+      background: var(--bg);
     }
 
     /* ── FOOTER ───────────────────────────────── */
@@ -654,7 +839,7 @@
         <a href="https://hoodi.etherscan.io/address/0x857289cCBFBc4C134Cc312022a104CD9b38d8AAE" target="_blank" rel="noopener">0x857289cCBFBc4C134Cc312022a104CD9b38d8AAE</a>
       </div>
       <div class="ref-row">
-        <span class="ref-lbl">Module</span>
+        <span class="ref-lbl">Curated</span>
         <a href="https://hoodi.etherscan.io/address/0x87EB69Ae51317405FD285efD2326a4a11f6173b9" target="_blank" rel="noopener">0x87EB69Ae51317405FD285efD2326a4a11f6173b9</a>
       </div>
       <div class="rpc-row">
@@ -678,6 +863,8 @@
   <div class="status-cell" id="status">Awaiting connection...</div>
 </div>
 
+<div id="queues-section"></div>
+
 <div class="races" id="content"></div>
 
 <div id="curves-section"></div>
@@ -696,6 +883,7 @@ const META_REGISTRY_ABI = [
   'function getOperatorGroup(uint256 groupId) view returns (tuple(tuple(uint64 nodeOperatorId, uint16 share)[] subNodeOperators, tuple(bytes data)[] externalOperators) groupInfo)',
   'function getNodeOperatorWeight(uint256 nodeOperatorId) view returns (uint256 weight)',
   'function getOperatorMetadata(uint256 nodeOperatorId) view returns (tuple(string name, string description, bool ownerEditsRestricted) metadata)',
+  'function getBondCurveWeight(uint256 curveId) view returns (uint256 weight)',
 ];
 
 const CURATED_MODULE_ABI = [
@@ -703,6 +891,9 @@ const CURATED_MODULE_ABI = [
   'function getNodeOperator(uint256 nodeOperatorId) view returns (tuple(uint32 totalAddedKeys, uint32 totalWithdrawnKeys, uint32 totalDepositedKeys, uint32 totalVettedKeys, uint32 stuckValidatorsCount, uint32 depositableValidatorsCount, uint32 targetLimit, uint8 targetLimitMode, uint32 totalExitedKeys, uint32 enqueuedCount, address managerAddress, address proposedManagerAddress, address rewardAddress, address proposedRewardAddress, bool extendedManagerPermissions) nodeOperator)',
   'function getNodeOperatorBalance(uint256 nodeOperatorId) view returns (uint256)',
   'function ACCOUNTING() view returns (address)',
+  'function getDepositAllocationTargets() view returns (uint256[] currentValidators, uint256[] targetValidators)',
+  'function getTopUpAllocationTargets() view returns (uint256[] currentAllocations, uint256[] targetAllocations)',
+  'function getNodeOperatorWeightAndExternalStake(uint256 nodeOperatorId) view returns (uint256 weight, uint256 externalStake)',
 ];
 
 const ACCOUNTING_ABI = [
@@ -713,6 +904,202 @@ const ACCOUNTING_ABI = [
 const PARAMETERS_REGISTRY_ABI = [
   'function getCurveParameters(uint256 curveId) view returns (tuple(uint256 keyRemovalCharge, uint256 generalDelayedPenaltyAdditionalFine, uint256 keysLimit, uint32 queuePriority, uint32 queueMaxDeposits, tuple(uint256 minKeyNumber, uint256 value)[] rewardShareData, tuple(uint256 minKeyNumber, uint256 value)[] performanceLeewayData, uint256 strikesLifetime, uint256 strikesThreshold, uint256 badPerformancePenalty, uint256 attestationsWeight, uint256 blocksWeight, uint256 syncWeight, uint256 allowedExitDelay, uint256 exitDelayFee, uint256 maxElWithdrawalRequestFee) params)',
 ];
+
+function renderAllocations({ metadataMap, depositTargets, topUpTargets, groupMap, noDataMap }) {
+  const root = document.getElementById('queues-section');
+  if (!root) return;
+
+  // ── Build raw rows ────────────────────────────────────────────────
+  const depositRows = [];
+  if (depositTargets) {
+    const currs = depositTargets[0], tgts = depositTargets[1];
+    const len = Math.min(currs?.length ?? 0, tgts?.length ?? 0);
+    for (let i = 0; i < len; i++) {
+      const cur = Number(currs[i] ?? 0);
+      const tgt = Number(tgts[i] ?? 0);
+      if (tgt <= 0) continue;
+      const no = noDataMap?.[i];
+      depositRows.push({
+        id: i, cur, tgt,
+        gap: cur - tgt,
+        pct: cur / tgt * 100,
+        atTarget: cur >= tgt,
+        name: metadataMap?.[i]?.name,
+        groupId: groupMap?.[i] ?? null,
+        depositable: no ? Number(no.depositableValidatorsCount) : 0,
+      });
+    }
+  }
+
+  const topUpRows = [];
+  if (topUpTargets) {
+    const currs = topUpTargets[0], tgts = topUpTargets[1];
+    const len = Math.min(currs?.length ?? 0, tgts?.length ?? 0);
+    for (let i = 0; i < len; i++) {
+      const cur = BigInt(currs[i] ?? 0);
+      const tgt = BigInt(tgts[i] ?? 0);
+      if (tgt <= 0n) continue;
+      const no = noDataMap?.[i];
+      topUpRows.push({
+        id: i, cur, tgt,
+        gap: cur - tgt,
+        pct: Number(cur * 10000n / tgt) / 100,
+        atTarget: cur >= tgt,
+        name: metadataMap?.[i]?.name,
+        groupId: groupMap?.[i] ?? null,
+        depositable: no ? Number(no.depositableValidatorsCount) : 0,
+      });
+    }
+  }
+
+  // ── State ──────────────────────────────────────────────────────────
+  const expanded = new Set();
+
+  function sortByGap(rows, isBig) {
+    if (isBig) return [...rows].sort((a, b) => (a.gap > b.gap ? 1 : a.gap < b.gap ? -1 : 0));
+    return [...rows].sort((a, b) => a.gap - b.gap);
+  }
+
+  function fmtGap(gap, isTopUp) {
+    if (isTopUp) {
+      if (gap === 0n) return '<span style="color:var(--green)">✓</span>';
+      if (gap > 0n)   return '+' + fmtEthVal(gap);
+      return '−' + fmtEthVal(-gap);
+    }
+    if (gap === 0) return '<span style="color:var(--green)">✓</span>';
+    if (gap > 0)   return '+' + gap;
+    return '−' + (-gap);
+  }
+
+  function buildBar(pct, color) {
+    if (pct <= 0) return '';
+    return '<div class="qi-bar-fill" style="width:' + Math.min(pct, 100).toFixed(1) + '%;background:' + color + '"></div>';
+  }
+
+  function buildOpRow(r, isTopUp) {
+    const at = r.atTarget;
+    const barColor = at ? 'var(--green)' : 'var(--blue)';
+    const fill = buildBar(r.pct, barColor);
+    const valHtml = isTopUp
+      ? fmtEthVal(r.cur) + ' / ' + fmtEthAmount(r.tgt)
+      : r.cur + ' / ' + r.tgt;
+    const pctLbl = Math.round(r.pct) + '%';
+    const gapHtml = fmtGap(r.gap, isTopUp);
+    const grpHtml = r.groupId != null
+      ? '<a class="qi-grp qi-grp-link" style="color:var(--text-2)" onclick="scrollToGroup(' + r.groupId + ')">' + r.groupId + '</a>'
+      : '<span class="qi-grp" style="color:var(--text-3)">—</span>';
+    const dim = !isTopUp && !at && r.depositable === 0;
+    const titleAttr = dim ? ' title="no depositable keys — will not receive deposits"' : '';
+    return '<div class="alloc-item' + (dim ? ' alloc-item-dim' : '') + '"' + titleAttr + '>'
+      + '<span></span><span></span>'
+      + '<span class="qi-name"><span class="qi-noid" style="margin-right:6px">#' + r.id + '</span>' + (r.name ? escHtml(r.name) : '') + '</span>'
+      + '<div class="qi-bar-col"><div class="qi-bar-wrap">' + fill + '</div><span class="qi-bar-pct">' + pctLbl + '</span></div>'
+      + '<span class="qi-val">' + valHtml + '</span>'
+      + '<span class="qi-gap">' + gapHtml + '</span>'
+      + '</div>';
+  }
+
+  function buildGroupRow(g, isTopUp, prefix) {
+    const key = prefix + '-' + (g.groupId == null ? 'un' : g.groupId);
+    const isExp = expanded.has(key);
+    const at = g.atTarget;
+    const barColor = at ? 'var(--green)' : 'var(--blue)';
+    const fill = buildBar(g.pct, barColor);
+    const valHtml = isTopUp
+      ? fmtEthVal(g.cur) + ' / ' + fmtEthAmount(g.tgt)
+      : g.cur + ' / ' + g.tgt;
+    const pctLbl = Math.round(g.pct) + '%';
+    const gapHtml = fmtGap(g.gap, isTopUp);
+
+    let grpHtml, label;
+    if (g.groupId != null) {
+      grpHtml = '<span class="qi-grp" style="color:var(--text-2)">' + g.groupId + '</span>';
+      label = 'Group #' + g.groupId;
+    } else {
+      grpHtml = '<span class="qi-grp" style="color:var(--text-3)">—</span>';
+      label = 'Ungrouped';
+    }
+
+    let html = '<div class="alloc-item alloc-grp-row" data-grp-key="' + key + '">'
+      + '<span class="qi-noid"><span class="grp-chev">' + (isExp ? '▼' : '▶') + '</span></span>'
+      + grpHtml
+      + '<span class="qi-name qi-name-bold">' + label + '</span>'
+      + '<div class="qi-bar-col"><div class="qi-bar-wrap">' + fill + '</div><span class="qi-bar-pct">' + pctLbl + '</span></div>'
+      + '<span class="qi-val">' + valHtml + '</span>'
+      + '<span class="qi-gap">' + gapHtml + '</span>'
+      + '</div>';
+
+    const subSorted = sortByGap(g.rows, isTopUp);
+    html += '<div class="alloc-grp-detail" data-grp-detail="' + key + '" style="display:' + (isExp ? '' : 'none') + '">';
+    for (const r of subSorted) html += buildOpRow(r, isTopUp);
+    html += '</div>';
+    return html;
+  }
+
+  function buildGroupView(rows, isTopUp, prefix) {
+    const buckets = new Map();
+    for (const r of rows) {
+      const key = r.groupId == null ? 'un' : r.groupId;
+      if (!buckets.has(key)) buckets.set(key, { groupId: r.groupId, rows: [] });
+      buckets.get(key).rows.push(r);
+    }
+    const aggs = [];
+    for (const b of buckets.values()) {
+      let cur = isTopUp ? 0n : 0;
+      let tgt = isTopUp ? 0n : 0;
+      for (const r of b.rows) { cur = cur + r.cur; tgt = tgt + r.tgt; }
+      const gap = cur - tgt;
+      const pct = isTopUp
+        ? (tgt > 0n ? Number(cur * 10000n / tgt) / 100 : 0)
+        : (tgt > 0  ? cur / tgt * 100 : 0);
+      const at  = isTopUp ? cur >= tgt : cur >= tgt;
+      aggs.push({ ...b, cur, tgt, gap, pct, atTarget: at });
+    }
+    const sorted = sortByGap(aggs, isTopUp);
+    if (!sorted.length) return '<div class="queue-empty">no groups</div>';
+    let html = '';
+    for (const g of sorted) html += buildGroupRow(g, isTopUp, prefix);
+    return html;
+  }
+
+  function buildColumn(title, rows, isTopUp, prefix) {
+    return '<div class="queues-col">'
+      + '<div class="queue-col-head"><span>' + title + '</span></div>'
+      + '<div class="alloc-head">'
+      +   '<span></span><span style="text-align:center">#</span><span>Group</span>'
+      +   '<span class="alloc-head-val" style="grid-column:4/6">cur / tgt</span>'
+      +   '<span class="alloc-head-val">gap</span>'
+      + '</div>'
+      + buildGroupView(rows, isTopUp, prefix)
+      + '</div>';
+  }
+
+  function rerender() {
+    root.innerHTML = '<div class="queues-wrap">'
+      + '<div class="queues-head">Allocations</div>'
+      + '<div class="queues-body">'
+      +   buildColumn('Deposit allocation (Keys)', depositRows, false, 'dep')
+      +   buildColumn('Top-up allocation (Ether)',  topUpRows,   true,  'top')
+      + '</div>'
+      + '</div>';
+    wireUp();
+  }
+
+  function wireUp() {
+    root.querySelectorAll('.alloc-grp-row').forEach(row => {
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('.qi-grp-link')) return;
+        const key = row.dataset.grpKey;
+        if (expanded.has(key)) expanded.delete(key);
+        else expanded.add(key);
+        rerender();
+      });
+    });
+
+  }
+
+  rerender();
+}
 
 const CURVE_COLORS = [
   '#60a5fa','#4ade80','#fbbf24','#f87171',
@@ -865,12 +1252,15 @@ async function load() {
     const accountingAddr = await cm.ACCOUNTING();
     const accounting = new ethers.Contract(accountingAddr, ACCOUNTING_ABI, provider);
 
-    const [noDataMap, metadataMap, weightMap, bondMap, curveIdMap] = await Promise.all([
+    const [noDataMap, metadataMap, weightMap, bondMap, curveIdMap, depositTargets, topUpTargets, extStakeMap] = await Promise.all([
       batchFetch(allNoIds, id => cm.getNodeOperator(id)),
       batchFetch(allNoIds, id => meta.getOperatorMetadata(id).catch(() => null)),
       batchFetch(allNoIds, id => meta.getNodeOperatorWeight(id)),
       batchFetch(allNoIds, id => cm.getNodeOperatorBalance(id)),
       batchFetch(allNoIds, id => accounting.getBondCurveId(id).catch(() => null)),
+      cm.getDepositAllocationTargets().catch(() => null),
+      cm.getTopUpAllocationTargets().catch(() => null),
+      batchFetch(allNoIds, id => cm.getNodeOperatorWeightAndExternalStake(id).catch(() => null)),
     ]);
 
     const uniqueCurveIds = [...new Set(
@@ -890,11 +1280,20 @@ async function load() {
 
     const paramsReg = new ethers.Contract(ADDRESSES.parametersRegistry, PARAMETERS_REGISTRY_ABI, provider);
     const curveParamsMap = {};
+    const curveWeightMap = {};
     await Promise.all(uniqueCurveIds.map(async (id) => {
-      const p = await paramsReg.getCurveParameters(id).catch(() => null);
-      if (!p) return;
-      curveParamsMap[id] = p;
+      const [p, w] = await Promise.all([
+        paramsReg.getCurveParameters(id).catch(() => null),
+        meta.getBondCurveWeight(id).catch(() => null),
+      ]);
+      if (p) curveParamsMap[id] = p;
+      if (w != null) curveWeightMap[id] = Number(w);
     }));
+
+    const groupMap = {};
+    for (let i = 0; i < groups.length; i++)
+      for (const sub of groups[i].subNodeOperators)
+        groupMap[Number(sub.nodeOperatorId)] = i + 1;
 
     document.getElementById('cell-races').querySelector('.big').textContent = groupCount;
     document.getElementById('cell-runners').querySelector('.big').textContent = noTotal;
@@ -933,8 +1332,9 @@ async function load() {
     }
 
     setStatus('Loaded.', 'ok');
-    renderBondCurves(uniqueCurveIds, curveInfoMap, curveParamsMap);
-    renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpNameMap, ungroupedIds, curveIdMap, curveInfoMap, uniqueCurveIds);
+    try { renderAllocations({ metadataMap, depositTargets, topUpTargets, groupMap, noDataMap }); } catch(e) { console.warn('renderAllocations failed:', e); }
+    renderBondCurves(uniqueCurveIds, curveInfoMap, curveParamsMap, curveWeightMap);
+    renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpNameMap, ungroupedIds, curveIdMap, curveInfoMap, uniqueCurveIds, extStakeMap);
   } catch (err) {
     setStatus('Error: ' + (err.shortMessage || err.message), 'error');
     console.error(err);
@@ -965,6 +1365,22 @@ function fmtEthPrecise(wei) {
   return eth.toPrecision(4).replace(/\.?0+$/, '') + ' Ξ';
 }
 
+function fmtEthVal(wei) {
+  // like fmtEthAmount but without the Ξ suffix — for "cur / tgt Ξ" formatting
+  return fmtEthAmount(wei).replace(/ ?Ξ$/, '');
+}
+
+function fmtEthAmount(wei) {
+  const eth = Number(BigInt(wei)) / 1e18;
+  if (eth === 0) return '0 Ξ';
+  if (eth >= 10000) return Math.round(eth / 1000) + 'k Ξ';
+  if (eth >= 1000)  return (eth / 1000).toFixed(1).replace(/\.0$/, '') + 'k Ξ';
+  if (eth >= 100)   return eth.toFixed(0) + ' Ξ';
+  if (eth >= 10)    return eth.toFixed(1) + ' Ξ';
+  if (eth >= 1)     return eth.toFixed(2) + ' Ξ';
+  return eth.toPrecision(3) + ' Ξ';
+}
+
 function fmtBP(v) {
   const n = Number(v) / 100;
   return n % 1 === 0 ? n + '%' : n.toFixed(2) + '%';
@@ -986,26 +1402,33 @@ function fmtSteps(arr, fmt) {
   ).join('');
 }
 
-function renderCurveParams(p) {
-  if (!p) return '';
-  const rows = [
-    ['Keys limit',     Number(p.keysLimit) === 0 ? '∞' : Number(p.keysLimit).toLocaleString()],
-    ['Key removal charge', fmtEthPrecise(p.keyRemovalCharge)],
-    ['Bad perf fine',  fmtEthPrecise(p.badPerformancePenalty)],
-    ['Delayed fine',   fmtEthPrecise(p.generalDelayedPenaltyAdditionalFine)],
-    ['Strikes',        `${Number(p.strikesThreshold)} hits · ${Number(p.strikesLifetime)} frames`],
-    ['Exit delay',     fmtDuration(p.allowedExitDelay)],
-    ['Exit delay fee', fmtEthPrecise(p.exitDelayFee)],
-    ['EL req fee cap', fmtEthPrecise(p.maxElWithdrawalRequestFee)],
-    ['Queue',          `priority ${Number(p.queuePriority)} · ${Number(p.queueMaxDeposits) === 0xFFFFFFFF ? 'no key count limit' : 'max ' + Number(p.queueMaxDeposits).toLocaleString()}`],
-  ];
+function renderCurveParams(p, bondCurveWeight) {
+  if (!p && bondCurveWeight == null) return '';
+  const rows = [];
+  if (bondCurveWeight != null) rows.push(['Bond curve weight', bondCurveWeight.toLocaleString()]);
+  if (p) {
+    rows.push(
+      ['Keys limit',         Number(p.keysLimit) === 0 ? '∞' : Number(p.keysLimit).toLocaleString()],
+      ['Key removal charge', fmtEthPrecise(p.keyRemovalCharge)],
+      ['Bad perf fine',      fmtEthPrecise(p.badPerformancePenalty)],
+      ['Delayed fine',       fmtEthPrecise(p.generalDelayedPenaltyAdditionalFine)],
+      ['Strikes',            `${Number(p.strikesThreshold)} hits · ${Number(p.strikesLifetime)} frames`],
+      ['Exit delay',         fmtDuration(p.allowedExitDelay)],
+      ['Exit delay fee',     fmtEthPrecise(p.exitDelayFee)],
+      ['EL req fee cap',     fmtEthPrecise(p.maxElWithdrawalRequestFee)],
+      ['Queue',              `priority ${Number(p.queuePriority)} · ${Number(p.queueMaxDeposits) === 0xFFFFFFFF ? 'no key count limit' : 'max ' + Number(p.queueMaxDeposits).toLocaleString()}`],
+    );
+  }
   const textRows = rows.map(([l, v]) =>
     `<div class="cp-row"><span class="cp-lbl">${l}</span><span class="cp-val">${v}</span></div>`
   ).join('');
+  const extraBlocks = p
+    ? `<div class="cp-block"><span class="cp-lbl">Strikes</span>${renderStrikesSegmented(p)}</div>
+       <div class="cp-block"><span class="cp-lbl">Perf weights</span>${renderPerfWeightsDonut(p)}</div>`
+    : '';
   return `<div class="curve-params">
     ${textRows}
-    <div class="cp-block"><span class="cp-lbl">Strikes</span>${renderStrikesSegmented(p)}</div>
-    <div class="cp-block"><span class="cp-lbl">Perf weights</span>${renderPerfWeightsDonut(p)}</div>
+    ${extraBlocks}
   </div>`;
 }
 
@@ -1073,7 +1496,7 @@ function fmtStepCompact(data) {
   return data.map(iv => `≥${Number(iv.minKeyNumber)}: ${fmtBP(iv.value)}`).join(' · ');
 }
 
-function renderBondCurves(curveIds, curveInfoMap, curveParamsMap = {}) {
+function renderBondCurves(curveIds, curveInfoMap, curveParamsMap = {}, curveWeightMap = {}) {
   const root = document.getElementById('curves-section');
   if (!curveIds.length) { root.innerHTML = ''; return; }
 
@@ -1164,7 +1587,7 @@ function renderBondCurves(curveIds, curveInfoMap, curveParamsMap = {}) {
         </div>
       </div>
       ${stepChartsHtml}
-      ${renderCurveParams(curveParamsMap[id])}
+      ${renderCurveParams(curveParamsMap[id], curveWeightMap[id])}
     </div>`;
   });
 
@@ -1392,7 +1815,7 @@ function updateStepCrosshair(key, wrap, evt) {
   tt.classList.add('visible');
 }
 
-function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpNameMap = {}, ungroupedIds = [], curveIdMap = {}, curveInfoMap = {}, uniqueCurveIds = []) {
+function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpNameMap = {}, ungroupedIds = [], curveIdMap = {}, curveInfoMap = {}, uniqueCurveIds = [], extStakeMap = {}) {
   const curveColorMap = {};
   uniqueCurveIds.forEach((id, i) => { curveColorMap[id] = curveColor(i); });
 
@@ -1432,7 +1855,7 @@ function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpN
     if (extCount > 0) subtitleParts.push(`${extCount} external`);
 
     html += `
-    <div class="race-card">
+    <div class="race-card" id="race-card-${gid}">
       <div class="race-header" onclick="toggleRace(${gid})">
         <span class="race-num-badge">${gid}.</span>
         <span class="race-title">Group #${gid}</span>
@@ -1456,6 +1879,7 @@ function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpN
         <col style="width:90px">
         <col style="width:60px">
         <col style="width:90px">
+        <col style="width:80px">
         <col style="width:40px">
         <col style="width:76px">
         <col style="width:96px">
@@ -1473,6 +1897,7 @@ function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpN
         <th style="text-align:right">Depositable</th>
         <th style="text-align:right">Queued</th>
         <th style="text-align:right">Balance</th>
+        <th style="text-align:right">Ext Stake</th>
         <th>Curve</th>
         <th style="text-align:right">Weight</th>
         <th>Manager</th>
@@ -1487,9 +1912,11 @@ function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpN
         const md   = metadataMap[id];
         const name = md?.name || '';
         const desc = md?.description || '';
-        const wt   = weightMap[id] != null ? Number(weightMap[id]) : null;
-        const bond = bondMap[id] != null ? bondMap[id] : null;
-        const color = clothColor(ri);
+        const wt      = weightMap[id] != null ? Number(weightMap[id]) : null;
+        const bond    = bondMap[id] != null ? bondMap[id] : null;
+        const extData = extStakeMap[id];
+        const extStake = extData?.externalStake != null ? BigInt(extData.externalStake) : null;
+        const color   = clothColor(ri);
 
         const nameCell = name
           ? desc
@@ -1509,6 +1936,7 @@ function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpN
           <td class="td-num">${no ? Number(no.depositableValidatorsCount): '—'}</td>
           <td class="td-num">${no ? Number(no.enqueuedCount)             : '—'}</td>
           <td class="td-bond">${fmtEth(bond)}</td>
+          <td class="td-bond">${extStake != null && extStake > 0n ? fmtEthAmount(extStake) : '<span style="color:var(--text-3)">—</span>'}</td>
           <td>${curveCell(id)}</td>
           <td class="td-wt">${wt !== null ? wt.toLocaleString() : '—'}</td>
           <td class="td-addr">${no ? addrLink(no.managerAddress) : '—'}</td>
@@ -1567,6 +1995,7 @@ function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpN
           <col style="width:90px">
           <col style="width:60px">
           <col style="width:90px">
+          <col style="width:80px">
           <col style="width:40px">
           <col style="width:76px">
           <col style="width:96px">
@@ -1583,6 +2012,7 @@ function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpN
           <th style="text-align:right">Depositable</th>
           <th style="text-align:right">Queued</th>
           <th style="text-align:right">Balance</th>
+          <th style="text-align:right">Ext Stake</th>
           <th>Curve</th>
           <th style="text-align:right">Weight</th>
           <th>Manager</th>
@@ -1590,12 +2020,14 @@ function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpN
         </tr></thead><tbody>`;
 
     for (const id of ungroupedIds) {
-      const no   = noDataMap[id];
-      const md   = metadataMap[id];
-      const name = md?.name || '';
-      const desc = md?.description || '';
-      const wt   = weightMap[id] != null ? Number(weightMap[id]) : null;
-      const bond = bondMap[id] != null ? bondMap[id] : null;
+      const no       = noDataMap[id];
+      const md       = metadataMap[id];
+      const name     = md?.name || '';
+      const desc     = md?.description || '';
+      const wt       = weightMap[id] != null ? Number(weightMap[id]) : null;
+      const bond     = bondMap[id] != null ? bondMap[id] : null;
+      const extData  = extStakeMap[id];
+      const extStake = extData?.externalStake != null ? BigInt(extData.externalStake) : null;
 
       const nameCell = name
         ? desc
@@ -1614,6 +2046,7 @@ function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpN
         <td class="td-num">${no ? Number(no.depositableValidatorsCount): '—'}</td>
         <td class="td-num">${no ? Number(no.enqueuedCount)             : '—'}</td>
         <td class="td-bond">${fmtEth(bond)}</td>
+        <td class="td-bond">${extStake != null && extStake > 0n ? fmtEthAmount(extStake) : '<span style="color:var(--text-3)">—</span>'}</td>
         <td>${curveCell(id)}</td>
         <td class="td-wt">${wt !== null ? wt.toLocaleString() : '—'}</td>
         <td class="td-addr">${no ? addrLink(no.managerAddress) : '—'}</td>
@@ -1625,6 +2058,18 @@ function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpN
   }
 
   content.innerHTML = html;
+}
+
+function scrollToGroup(gid) {
+  const card = document.getElementById('race-card-' + gid);
+  if (!card) return;
+  const body = document.getElementById('body-' + gid);
+  const chev = document.getElementById('chev-' + gid);
+  if (body && body.style.display === 'none') {
+    body.style.display = '';
+    if (chev) chev.textContent = '▼';
+  }
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function toggleRace(id) {
