@@ -431,6 +431,10 @@
       font-weight: 600;
       color: var(--text-1);
     }
+    .race-title-name {
+      color: var(--text-2);
+      font-weight: 500;
+    }
 
     .race-subtitle {
       font-size: 12px;
@@ -953,7 +957,7 @@ const ADDRESSES = {
 
 const META_REGISTRY_ABI = [
   'function getOperatorGroupsCount() view returns (uint256)',
-  'function getOperatorGroup(uint256 groupId) view returns (tuple(tuple(uint64 nodeOperatorId, uint16 share)[] subNodeOperators, tuple(bytes data)[] externalOperators) groupInfo)',
+  'function getOperatorGroup(uint256 groupId) view returns (tuple(string name, tuple(uint64 nodeOperatorId, uint16 share)[] subNodeOperators, tuple(bytes data)[] externalOperators) groupInfo)',
   'function getNodeOperatorWeight(uint256 nodeOperatorId) view returns (uint256 weight)',
   'function getOperatorMetadata(uint256 nodeOperatorId) view returns (tuple(string name, string description, bool ownerEditsRestricted) metadata)',
   'function getBondCurveWeight(uint256 curveId) view returns (uint256 weight)',
@@ -984,7 +988,7 @@ const PARAMETERS_REGISTRY_ABI = [
   'function getCurveParameters(uint256 curveId) view returns (tuple(uint256 keyRemovalCharge, uint256 generalDelayedPenaltyAdditionalFine, uint256 keysLimit, uint32 queuePriority, uint32 queueMaxDeposits, tuple(uint256 minKeyNumber, uint256 value)[] rewardShareData, tuple(uint256 minKeyNumber, uint256 value)[] performanceLeewayData, uint256 strikesLifetime, uint256 strikesThreshold, uint256 badPerformancePenalty, uint256 attestationsWeight, uint256 blocksWeight, uint256 syncWeight, uint256 allowedExitDelay, uint256 exitDelayFee, uint256 maxElWithdrawalRequestFee) params)',
 ];
 
-function renderAllocations({ metadataMap, depositTargets, topUpTargets, groupMap, noDataMap, cm, provider, stakingRouter }) {
+function renderAllocations({ metadataMap, depositTargets, topUpTargets, groupMap, groupNameMap = {}, noDataMap, cm, provider, stakingRouter }) {
   const root = document.getElementById('queues-section');
   if (!root) return;
 
@@ -1179,7 +1183,8 @@ function renderAllocations({ metadataMap, depositTargets, topUpTargets, groupMap
     let grpHtml, label;
     if (g.groupId != null) {
       grpHtml = '<span class="qi-grp" style="color:var(--text-2)">' + g.groupId + '</span>';
-      label = 'Group #' + g.groupId;
+      const gName = groupNameMap[g.groupId];
+      label = gName ? ('Group #' + g.groupId + ' · ' + escHtml(gName)) : ('Group #' + g.groupId);
     } else {
       grpHtml = '<span class="qi-grp" style="color:var(--text-3)">—</span>';
       label = 'Ungrouped';
@@ -1605,9 +1610,13 @@ async function load() {
     }));
 
     const groupMap = {};
-    for (let i = 0; i < groups.length; i++)
+    const groupNameMap = {};
+    for (let i = 0; i < groups.length; i++) {
+      const gid = i + 1;
+      if (groups[i].name) groupNameMap[gid] = groups[i].name;
       for (const sub of groups[i].subNodeOperators)
-        groupMap[Number(sub.nodeOperatorId)] = i + 1;
+        groupMap[Number(sub.nodeOperatorId)] = gid;
+    }
 
     document.getElementById('cell-races').querySelector('.big').textContent = groupCount;
     document.getElementById('cell-runners').querySelector('.big').textContent = noTotal;
@@ -1655,7 +1664,7 @@ async function load() {
       if (cnt > 0n) stakingRouter = await cm.getRoleMember(role, 0);
     } catch (e) { console.warn('Could not resolve STAKING_ROUTER_ROLE member:', e); }
 
-    try { renderAllocations({ metadataMap, depositTargets, topUpTargets, groupMap, noDataMap, cm, provider, stakingRouter }); } catch(e) { console.warn('renderAllocations failed:', e); }
+    try { renderAllocations({ metadataMap, depositTargets, topUpTargets, groupMap, groupNameMap, noDataMap, cm, provider, stakingRouter }); } catch(e) { console.warn('renderAllocations failed:', e); }
     renderBondCurves(uniqueCurveIds, curveInfoMap, curveParamsMap, curveWeightMap);
     renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpNameMap, ungroupedIds, curveIdMap, curveInfoMap, uniqueCurveIds, extStakeMap);
   } catch (err) {
@@ -2169,7 +2178,7 @@ function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpN
   let html = '';
   for (let i = 0; i < groups.length; i++) {
     const gid = i + 1;
-    const { subNodeOperators, externalOperators } = groups[i];
+    const { name, subNodeOperators, externalOperators } = groups[i];
     const subCount = subNodeOperators.length;
     const extCount = externalOperators.length;
 
@@ -2177,11 +2186,15 @@ function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpN
     if (subCount > 0) subtitleParts.push(`${subCount} sub-operator${subCount !== 1 ? 's' : ''}`);
     if (extCount > 0) subtitleParts.push(`${extCount} external`);
 
+    const titleHtml = name && name.length
+      ? `Group #${gid} · <span class="race-title-name">${escHtml(name)}</span>`
+      : `Group #${gid}`;
+
     html += `
     <div class="race-card" id="race-card-${gid}">
       <div class="race-header" onclick="toggleRace(${gid})">
         <span class="race-num-badge">${gid}.</span>
-        <span class="race-title">Group #${gid}</span>
+        <span class="race-title">${titleHtml}</span>
         <span class="race-subtitle">${escHtml(subtitleParts.join(' · '))}</span>
         <span class="race-chev" id="chev-${gid}">▼</span>
       </div>
