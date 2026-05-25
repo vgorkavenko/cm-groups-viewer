@@ -1548,14 +1548,14 @@ async function load() {
       cm.getNodeOperatorsCount(),
     ]);
 
-    // index 0 is reserved (NO_GROUP_ID stone); real groups are 1..N-1
+    // Real groups are 1..N inclusive (getOperatorGroup(N) does not revert).
     const N = Number(groupsCount);
-    const groupCount = N - 1;
+    const groupCount = N;
     const noTotal = Number(noCount);
     setStatus(`Loading ${groupCount} group${groupCount !== 1 ? 's' : ''}...`);
 
     const groupPromises = [];
-    for (let g = 1; g < N; g++) groupPromises.push(meta.getOperatorGroup(g));
+    for (let g = 1; g <= N; g++) groupPromises.push(meta.getOperatorGroup(g));
     const groups = await Promise.all(groupPromises);
 
     const groupedNoIds = new Set();
