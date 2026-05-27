@@ -432,8 +432,8 @@
       color: var(--text-1);
     }
     .race-title-name {
-      color: var(--text-2);
-      font-weight: 500;
+      color: var(--text-1);
+      font-weight: 600;
     }
 
     .race-subtitle {
@@ -1184,7 +1184,7 @@ function renderAllocations({ metadataMap, depositTargets, topUpTargets, groupMap
     if (g.groupId != null) {
       grpHtml = '<span class="qi-grp" style="color:var(--text-2)">' + g.groupId + '</span>';
       const gName = groupNameMap[g.groupId];
-      label = gName ? ('Group #' + g.groupId + ' · ' + escHtml(gName)) : ('Group #' + g.groupId);
+      label = gName ? ('Group ' + escHtml(gName)) : ('Group #' + g.groupId);
     } else {
       grpHtml = '<span class="qi-grp" style="color:var(--text-3)">—</span>';
       label = 'Ungrouped';
@@ -2187,7 +2187,7 @@ function renderGroups(groups, noDataMap, metadataMap, weightMap, bondMap, extOpN
     if (extCount > 0) subtitleParts.push(`${extCount} external`);
 
     const titleHtml = name && name.length
-      ? `Group #${gid} · <span class="race-title-name">${escHtml(name)}</span>`
+      ? `Group <span class="race-title-name">${escHtml(name)}</span>`
       : `Group #${gid}`;
 
     html += `
